@@ -1,25 +1,28 @@
-from gpiozero import Servo 
-from gpiozero.tools import sin_values
-from time import sleep
-from signal import pause
+#!/usr/bin/python3
+import pigpio
+import time
 
-SIGNAL_PIN = 0
+servo = 3
 
-servo = Servo(SIGNAL_PIN)
+# more info at http://abyz.me.uk/rpi/pigpio/python.html#set_servo_pulsewidth
 
-servo.min()
-sleep(1)
-servo.max()
-sleep(1)
-servo.mid()
-sleep(1)
-servo.value = 0.5
-sleep(0.5)
-servo.value = 0.2
-sleep(0.5)
-servo.min()
+pwm = pigpio.pi()
+pwm.set_mode(servo, pigpio.OUTPUT)
 
-servo.source = sin_values()
-servo.source_delay = 0.1
+pwm.set_PWM_frequency( servo, 50 )
 
-pause()
+print( "0 deg" )
+pwm.set_servo_pulsewidth( servo, 500 ) ;
+time.sleep( 3 )
+
+print( "90 deg" )
+pwm.set_servo_pulsewidth( servo, 1500 ) ;
+time.sleep( 3 )
+
+print( "180 deg" )
+pwm.set_servo_pulsewidth( servo, 2500 ) ;
+time.sleep( 3 )
+
+# turning off servo
+pwm.set_PWM_dutycycle( servo, 0 )
+pwm.set_PWM_frequency( servo, 0 )
