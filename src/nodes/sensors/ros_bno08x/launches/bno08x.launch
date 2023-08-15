@@ -1,0 +1,4 @@
+<launch>
+    <node name="ros_bno08x" package="ros_bno08x" executable="talker.py" output="screen">
+    </node>
+</launch>
