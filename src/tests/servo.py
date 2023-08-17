@@ -1,28 +1,26 @@
 #!/usr/bin/python3
-import pigpio
+# SPDX-FileCopyrightText: 2018 Kattni Rembor for Adafruit Industries
+#
+# SPDX-License-Identifier: MIT
+
+"""CircuitPython Essentials Servo standard servo example"""
 import time
+import board
+import pwmio
+from adafruit_motor import servo
 
-servo = 3
+SERVO_PIN = board.D2
 
-# more info at http://abyz.me.uk/rpi/pigpio/python.html#set_servo_pulsewidth
+# create a PWMOut object on Pin A2.
+pwm = pwmio.PWMOut(SERVO_PIN, frequency=50)
 
-pwm = pigpio.pi()
-pwm.set_mode(servo, pigpio.OUTPUT)
+# Create a servo object, my_servo.
+servo_motor = servo.Servo(pwm, min_pulse=750, max_pulse=2250)
 
-pwm.set_PWM_frequency( servo, 50 )
-
-print( "0 deg" )
-pwm.set_servo_pulsewidth( servo, 500 ) ;
-time.sleep( 3 )
-
-print( "90 deg" )
-pwm.set_servo_pulsewidth( servo, 1500 ) ;
-time.sleep( 3 )
-
-print( "180 deg" )
-pwm.set_servo_pulsewidth( servo, 2500 ) ;
-time.sleep( 3 )
-
-# turning off servo
-pwm.set_PWM_dutycycle( servo, 0 )
-pwm.set_PWM_frequency( servo, 0 )
+while True:
+    for angle in range(0, 180, 5):  # 0 - 180 degrees, 5 degrees at a time.
+        servo_motor.angle = angle
+        time.sleep(0.05)
+    for angle in range(180, 0, -5): # 180 - 0 degrees, 5 degrees at a time.
+        servo_motor.angle = angle
+        time.sleep(0.05)

@@ -8,6 +8,7 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 from sensor_msgs.msg import Imu
 import pickle
+from sys import argv
 
 x_positions = np.array([])
 y_positions = np.array([])
@@ -20,7 +21,6 @@ y_current_position = 0
 
 prev_timestamp = None
 
-
 def save_trajectory():
     global x_positions
     global y_positions
@@ -30,7 +30,6 @@ def save_trajectory():
     # Save the CubicSpline object to a file using pickle
     with open('cubic_spline.pkl', 'wb') as f:
         pickle.dump(spline, f)
-
 
 def imu_callback(msg):
     global x_positions
@@ -68,9 +67,8 @@ def main():
     # node intialization
     node = rclpy.create_node('carlos')
     imu_sub = node.create_subscription(Imu, 'bno08x/raw', imu_callback, 10)
+    imu_sub # prevent unused variable warning
     node.get_logger().info('carlos node launched.')
-
-
 
 if __name__ == '__main__':
     main()
