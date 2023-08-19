@@ -11,12 +11,17 @@ import busio
 from digitalio import DigitalInOut 
 from std_msgs.msg import ColorRGBA
 from sys import argv
-from time import sleep
+from time import time
 
-MARK_COLOR_LOWER = [255, 255, 255]
-MARK_COLOR_UPPER = [255, 255, 255]
 TCS_ADDR = 0x29
 LED_PIN = board.D13
+
+MARK_COLOR_LOWER = [200, 200, 200]
+MARK_COLOR_UPPER = [255, 255, 255]
+
+LED_DELAY = 0.5
+
+led = None
 
 def main():
 
@@ -32,13 +37,16 @@ def main():
     # sensor initialization
     i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
     tcs = TCS34725(i2c,address=TCS_ADDR) #0x29
+    tcs.integration_time = 150  # time to read the signal, between 2.4 and 614.4 milliseconds
+    tcs.gain = 16 # ampplification factor of the light, 1, 4, 16, 60
 
     # led initialization
-    led_pin = DigitalInOut(LED_PIN)
+    global led
+    led = DigitalInOut(LED_PIN)
 
     color_msg = ColorRGBA()
 
-    led_on = False
+    led_countdown = 0
     while rclpy.ok():
 
         r, g, b = tcs.color_rgb_bytes
@@ -51,11 +59,17 @@ def main():
 
         color = [r, g, b]
 
-        if not led_on and all(MARK_COLOR_LOWER[i] < color[i] < MARK_COLOR_UPPER[i] for i in range(3)):
-            led_pin.value = True
-            led_on = True
+        if all(MARK_COLOR_LOWER[i] < color[i] < MARK_COLOR_UPPER[i] for i in range(3)):
+            led.value = True
+            led_countdown = time() + LED_DELAY
+
+        if time() > led_countdown:
+            led.value = False
 
         color_pub.publish(color_msg)
 
-if __name__ == "__main__":
+try: 
     main()
+except Exception:
+    if led != None:
+        led.value = False

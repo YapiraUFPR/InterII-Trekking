@@ -26,7 +26,7 @@ def bno08x_node():
 
     raw_pub = node.create_publisher(Imu, 'bno08x/raw', 10)
     mag_pub = node.create_publisher(MagneticField, 'bno08x/mag', 10)
-    status_pub = node.create_publisher(DiagnosticStatus, 'bno08x/status', 10)
+    # status_pub = node.create_publisher(DiagnosticStatus, 'bno08x/status', 10)
 
     rate = node.create_rate(100)  # frequency in Hz
     node.get_logger().info('bno08x node launched.')
@@ -76,11 +76,11 @@ def bno08x_node():
         mag_msg.magnetic_field_covariance[0] = -1
         mag_pub.publish(mag_msg)
 
-        status_msg = DiagnosticStatus()
-        status_msg.level = 0
-        status_msg.name = "bno08x IMU"
-        status_msg.message = ""
-        status_pub.publish(status_msg)
+        # status_msg = DiagnosticStatus()
+        # status_msg.level = 0
+        # status_msg.name = "bno08x IMU"
+        # status_msg.message = ""
+        # status_pub.publish(status_msg)
 
         rate.sleep()
 
