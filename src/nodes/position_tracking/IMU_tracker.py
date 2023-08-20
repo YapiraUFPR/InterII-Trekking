@@ -23,7 +23,11 @@ class IMUTracker:
         self._aidx = idx[data_order['a']]
         self._midx = idx[data_order['m']]
 
-    def initialize(self, data, noise_coefficient={'w': 100, 'a': 100, 'm': 10}):
+        self._p = np.array([[0, 0, 0]]).T
+        self._prevt = -1
+        self._t = 0
+
+    def initialize(self, callib_data, noise_coefficient={'w': 100, 'a': 100, 'm': 10}):
         '''
         Algorithm initialization
         
@@ -37,6 +41,7 @@ class IMUTracker:
 
         # discard the first few readings
         # for some reason they might fluctuate a lot
+        data = callib_data[5:30]
         w = data[:, self._widx[0]:self._widx[1]]
         a = data[:, self._aidx[0]:self._aidx[1]]
         m = data[:, self._midx[0]:self._midx[1]]
@@ -65,14 +70,16 @@ class IMUTracker:
         gyro_bias = w.mean(axis=0)
         acc_noise = noise_coefficient['a'] * np.linalg.norm(avar)
         mag_noise = noise_coefficient['m'] * np.linalg.norm(mvar)
-        return (gn, g0, mn, gyro_noise, gyro_bias, acc_noise, mag_noise)
 
-    def attitudeTrack(self, data, init_list):
+        self._init_list = (gn, g0, mn, gyro_noise, gyro_bias, acc_noise, mag_noise)
+        self._an_drift_rate = self.calcAccErr(data)
+
+    def attitudeTrack(self, data):
         '''
         Removes gravity from acceleration data and transform it into navitgaion frame.
         Also tracks device's orientation.
         
-        @param data: (,9) ndarray
+        @param data: (9) ndarray
         @param list: initialization values for EKF algorithm: 
         (gn, g0, mn, gyro_noise, gyro_bias, acc_noise, mag_noise)
 
@@ -82,11 +89,11 @@ class IMUTracker:
         # ------------------------------- #
         # ---- Initialization ----
         # ------------------------------- #
-        gn, g0, mn, gyro_noise, gyro_bias, acc_noise, mag_noise = init_list
-        w = data[:, self._widx[0]:self._widx[1]] - gyro_bias
-        a = data[:, self._aidx[0]:self._aidx[1]]
-        m = data[:, self._midx[0]:self._midx[1]]
-        sample_number = np.shape(data)[0]
+        gn, g0, mn, gyro_noise, gyro_bias, acc_noise, mag_noise = self._init_list
+        w = data[self._widx[0]:self._widx[1]] - gyro_bias
+        a = data[self._aidx[0]:self._aidx[1]]
+        m = data[self._midx[0]:self._midx[1]]
+        # sample_number = np.shape(data)[0]
 
         # ---- data container ----
         a_nav = []
@@ -105,89 +112,121 @@ class IMUTracker:
 
         # all vectors are column vectors
 
-        t = 0
-        while t < sample_number:
+        # t = 0
+        # while t < sample_number:
 
-            # ------------------------------- #
-            # ---- 0. Data Preparation ----
-            # ------------------------------- #
+        # ------------------------------- #
+        # ---- 0. Data Preparation ----
+        # ------------------------------- #
 
-            wt = w[t, np.newaxis].T
-            at = a[t, np.newaxis].T
-            mt = normalized(m[t, np.newaxis].T)
+        wt = w[np.newaxis].T
+        at = a[np.newaxis].T
+        mt = normalized(m[np.newaxis].T)
 
-            # ------------------------------- #
-            # ---- 1. Propagation ----
-            # ------------------------------- #
+        # ------------------------------- #
+        # ---- 1. Propagation ----
+        # ------------------------------- #
 
-            Ft = F(q, wt, self.dt)
-            Gt = G(q)
-            Q = (gyro_noise * self.dt)**2 * Gt @ Gt.T
+        Ft = F(q, wt, self.dt)
+        Gt = G(q)
+        Q = (gyro_noise * self.dt)**2 * Gt @ Gt.T
 
-            q = normalized(Ft @ q)
-            P = Ft @ P @ Ft.T + Q
+        q = normalized(Ft @ q)
+        P = Ft @ P @ Ft.T + Q
 
-            # ------------------------------- #
-            # ---- 2. Measurement Update ----
-            # ------------------------------- #
+        # ------------------------------- #
+        # ---- 2. Measurement Update ----
+        # ------------------------------- #
 
-            # Use normalized measurements to reduce error!
+        # Use normalized measurements to reduce error!
 
-            # ---- acc and mag prediction ----
-            pa = normalized(-rotate(q) @ gn)
-            pm = normalized(rotate(q) @ mn)
+        # ---- acc and mag prediction ----
+        pa = normalized(-rotate(q) @ gn)
+        pm = normalized(rotate(q) @ mn)
 
-            # ---- residual ----
-            Eps = np.vstack((normalized(at), mt)) - np.vstack((pa, pm))
+        # ---- residual ----
+        Eps = np.vstack((normalized(at), mt)) - np.vstack((pa, pm))
 
-            # ---- sensor noise ----
-            # R = internal error + external error
-            Ra = [(acc_noise / np.linalg.norm(at))**2 + (1 - g0 / np.linalg.norm(at))**2] * 3
-            Rm = [mag_noise**2] * 3
-            R = np.diag(Ra + Rm)
+        # ---- sensor noise ----
+        # R = internal error + external error
+        Ra = [(acc_noise / np.linalg.norm(at))**2 + (1 - g0 / np.linalg.norm(at))**2] * 3
+        Rm = [mag_noise**2] * 3
+        R = np.diag(Ra + Rm)
 
-            # ---- kalman gain ----
-            Ht = H(q, gn, mn)
-            S = Ht @ P @ Ht.T + R
-            K = P @ Ht.T @ np.linalg.inv(S)
+        # ---- kalman gain ----
+        Ht = H(q, gn, mn)
+        S = Ht @ P @ Ht.T + R
+        K = P @ Ht.T @ np.linalg.inv(S)
 
-            # ---- actual update ----
-            q = q + K @ Eps
-            P = P - K @ Ht @ P
+        # ---- actual update ----
+        q = q + K @ Eps
+        P = P - K @ Ht @ P
 
-            # ------------------------------- #
-            # ---- 3. Post Correction ----
-            # ------------------------------- #
+        # ------------------------------- #
+        # ---- 3. Post Correction ----
+        # ------------------------------- #
 
-            q = normalized(q)
-            P = 0.5 * (P + P.T)    # make sure P is symmertical
+        q = normalized(q)
+        P = 0.5 * (P + P.T)    # make sure P is symmertical
 
-            # ------------------------------- #
-            # ---- 4. other things ----
-            # ------------------------------- #
+        # ------------------------------- #
+        # ---- 4. other things ----
+        # ------------------------------- #
 
-            # ---- navigation frame acceleration ----
-            conj = -I(4)
-            conj[0, 0] = 1
-            an = rotate(conj @ q) @ at + gn
+        # ---- navigation frame acceleration ----
+        conj = -I(4)
+        conj[0, 0] = 1
+        an = rotate(conj @ q) @ at + gn
 
-            # ---- navigation frame orientation ----
-            orin = rotate(conj @ q) @ init_ori
+        # ---- navigation frame orientation ----
+        orin = rotate(conj @ q) @ init_ori
 
-            # ---- saving data ----
-            a_nav.append(an.T[0])
-            orix.append(orin.T[0, :])
-            oriy.append(orin.T[1, :])
-            oriz.append(orin.T[2, :])
+        # ---- saving data ----
+        a_nav = an.T[0]
+        orix = orin.T[0, :]
+        oriy = orin.T[1, :]
+        oriz = orin.T[2, :]
 
-            t += 1
+        # t += 1
 
-        a_nav = np.array(a_nav)
-        orix = np.array(orix)
-        oriy = np.array(oriy)
-        oriz = np.array(oriz)
         return (a_nav, orix, oriy, oriz)
+    
+    def calcAccErr(self, data, threshold=0.2):
+        '''
+        Calculates drift in acc data assuming that
+        the device stays still during initialization and ending period.
+        The initial and final acc are inferred to be exactly 0.
+        
+        @param a_nav: acc data, raw output from the kalman filter
+        @param threshold: acc threshold to detect the starting and ending point of motion
+        
+        Return: drift vector
+        '''
 
+        a_nav = []
+        for d in data:
+            a_nav.append(self.attitudeTrack(d, self._init_list)[0])
+        a_nav = np.array(a_nav)
+
+        sample_number = np.shape(a_nav)[0]
+        t_start = 0
+        for t in range(sample_number):
+            at = a_nav[t]
+            if np.linalg.norm(at) > threshold:
+                t_start = t
+                break
+
+        t_end = 0
+        for t in range(sample_number - 1, -1, -1):
+            at = a_nav[t]
+            if np.linalg.norm(at - a_nav[-1]) > threshold:
+                t_end = t
+                break
+
+        an_drift = a_nav[t_end:].mean(axis=0)
+        an_drift_rate = an_drift / (t_end - t_start)
+        return an_drift_rate
+    
     def removeAccErr(self, a_nav, threshold=0.2, filter=False, wn=(0.01, 15)):
         '''
         Removes drift in acc data assuming that
@@ -242,33 +281,33 @@ class IMUTracker:
         Return: velocity data
         '''
 
-        sample_number = np.shape(a_nav)[0]
+        # sample_number = np.shape(a_nav)[0]
         velocities = []
-        prevt = -1
+        # prevt = -1
         still_phase = False
 
         v = np.zeros((3, 1))
-        t = 0
-        while t < sample_number:
-            at = a_nav[t, np.newaxis].T
+        # t = 0
+        # while t < sample_number:
+        at = a_nav[np.newaxis].T
 
-            if np.linalg.norm(at) < threshold:
-                if not still_phase:
-                    predict_v = v + at * self.dt
+        if np.linalg.norm(at) < threshold:
+            if not still_phase:
+                predict_v = v + at * self.dt
 
-                    v_drift_rate = predict_v / (t - prevt)
-                    for i in range(t - prevt - 1):
-                        velocities[prevt + 1 + i] -= (i + 1) * v_drift_rate.T[0]
+                v_drift_rate = predict_v / (self._t - self._prevt)
+                for i in range(self._t - self._prevt - 1):
+                    velocities[self._prevt + 1 + i] -= (i + 1) * v_drift_rate.T[0]
 
-                v = np.zeros((3, 1))
-                prevt = t
-                still_phase = True
-            else:
-                v = v + at * self.dt
-                still_phase = False
+            v = np.zeros((3, 1))
+            self._prevt = self._t
+            still_phase = True
+        else:
+            v = v + at * self.dt
+            still_phase = False
 
-            velocities.append(v.T[0])
-            t += 1
+        velocities.append(v.T[0])
+            # t += 1
 
         velocities = np.array(velocities)
         return velocities
@@ -281,20 +320,32 @@ class IMUTracker:
         @param velocities: velocity data
         
         Return: 3D coordinates in navigation frame
+
+        Modfied to store the previous iteration's position and add the current velocity to it
         '''
 
         sample_number = np.shape(a_nav)[0]
         positions = []
-        p = np.array([[0, 0, 0]]).T
 
         t = 0
         while t < sample_number:
             at = a_nav[t, np.newaxis].T
             vt = velocities[t, np.newaxis].T
 
-            p = p + vt * self.dt + 0.5 * at * self.dt**2
-            positions.append(p.T[0])
+            self._p = self._p + vt * self.dt + 0.5 * at * self.dt**2
+            positions.append(self._p.T[0])
             t += 1
 
         positions = np.array(positions)
         return positions
+    
+    def calculatePosition(self, data):
+        # EKF step
+        a_nav, orix, oriy, oriz = self.attitudeTrack(data)
+        # Acceleration correction step
+        a_nav_filtered = a_nav - self._an_drift_rate
+        # ZUPT step
+        v = self.zupt(a_nav_filtered, threshold=0.2)
+        # Integration Step
+        return self.positionTrack(a_nav_filtered, v)[0]  
+    

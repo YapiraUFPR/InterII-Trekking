@@ -59,10 +59,11 @@ def position_tracker():
         if len(callib_data) > CALIB_DATA_SIZE:
             finished_callib = True
 
-    init_list = tracker.initialize(np.array(callib_data, dtype=np.float32))
+    tracker.initialize(np.array(callib_data, dtype=np.float32))
     node.get_logger().info('callibration finished.')
 
     node.get_logger().info('position tracking started.')
+    i = 0
     while rclpy.ok():
         rclpy.spin_once(node)
 
@@ -73,14 +74,7 @@ def position_tracker():
             mag_data = []
             data_np = np.array(data, dtype=np.float32)
 
-            # EKF step
-            a_nav, orix, oriy, oriz = tracker.attitudeTrack(data_np, init_list)
-            # Acceleration correction step
-            a_nav_filtered = tracker.removeAccErr(a_nav, filter=False)
-            # ZUPT step
-            v = tracker.zupt(a_nav_filtered, threshold=0.2)
-            # Integration Step
-            p = tracker.positionTrack(a_nav_filtered, v)[0]  
+            p = tracker.calculatePosition(data_np)
 
             # Publish position
             msg = PoseStamped()
@@ -89,6 +83,8 @@ def position_tracker():
             msg.pose.position.y = p[1]
             msg.pose.position.z = p[2]
             pos_pub.publish(msg)
+
+            i += 1
 
 if __name__ == '__main__':
     position_tracker()
