@@ -32,13 +32,13 @@ while not finished_callib:
     accel_x, accel_y, accel_z = bno.acceleration  
     gyro_x, gyro_y, gyro_z = bno.gyro 
     mag_x, mag_y, mag_z = bno.magnetic 
-    quat_i, quat_j, quat_k, quat_real = bno.quaternion  
+    # quat_i, quat_j, quat_k, quat_real = bno.quaternion  
     callib_data += [gyro_x, gyro_y, gyro_z, accel_x, accel_y, accel_z, mag_x, mag_y, mag_z]
     if len(callib_data) > 1000:
         finished_callib = True
 
-callib_data = np.array(callib_data)
-tracker.calibrate(callib_data)
+# callib_data = np.array(callib_data)
+# tracker.initialize(callib_data)
 
 while True:
 
@@ -46,12 +46,12 @@ while True:
     accel_x, accel_y, accel_z = bno.acceleration  
     print("Acceleration: X: %0.6f  Y: %0.6f Z: %0.6f  m/s^2" % (accel_x, accel_y, accel_z))
     gyro_x, gyro_y, gyro_z = bno.gyro 
-    print("Gyro: X: %0.6f  Y: %0.6f Z: %0.6f rads/s" % (gyro_x, gyro_y, gyro_z))
-    mag_x, mag_y, mag_z = bno.magnetic 
-    print("Magnetometer: X: %0.6f  Y: %0.6f Z: %0.6f uT" % (mag_x, mag_y, mag_z))
+    # print("Gyro: X: %0.6f  Y: %0.6f Z: %0.6f rads/s" % (gyro_x, gyro_y, gyro_z))
+    # mag_x, mag_y, mag_z = bno.magnetic 
+    # print("Magnetometer: X: %0.6f  Y: %0.6f Z: %0.6f uT" % (mag_x, mag_y, mag_z))
     # quat_i, quat_j, quat_k, quat_real = bno.quaternion  
     # print("RVQ: I: %0.6f  J: %0.6f K: %0.6f  Real: %0.6f" % (quat_i, quat_j, quat_k, quat_real))
-    data = [gyro_x, gyro_y, gyro_z, accel_x, accel_y, accel_z, mag_x, mag_y, mag_z]
-    data = np.array(data)
-    p = tracker.calculatePosition(data)
-    print(p)
+    # data = [gyro_x, gyro_y, gyro_z, accel_x, accel_y, accel_z, mag_x, mag_y, mag_z]
+    # data = np.array(data)
+    # p = tracker.calculatePosition(data)
+    # print(p)
