@@ -4,6 +4,7 @@
 import time
 import board
 import busio
+import adafruit_bitbangio as bitbangio
 from adafruit_bno08x import (
     BNO_REPORT_ACCELEROMETER,
     BNO_REPORT_GYROSCOPE,
@@ -16,7 +17,7 @@ import numpy as np
 
 SAMPLE_RATE = 400
 
-i2c = busio.I2C(board.SCL, board.SDA, frequency=SAMPLE_RATE*1000)
+i2c = busio.I2C(scl=board.SCL, sda=board.SDA, frequency=SAMPLE_RATE*1000)
 bno = BNO08X_I2C(i2c,address=0x4b) # BNO080 (0x4b) BNO085 (0x4a)
 
 bno.enable_feature(BNO_REPORT_ACCELEROMETER)

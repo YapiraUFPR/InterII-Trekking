@@ -9,7 +9,7 @@ import board
 import pwmio
 from adafruit_motor import servo
 
-SERVO_PIN = board.D2
+SERVO_PIN = board.D4
 
 # create a PWMOut object on Pin A2.
 pwm = pwmio.PWMOut(SERVO_PIN, frequency=50)
