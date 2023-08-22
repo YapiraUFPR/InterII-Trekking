@@ -96,7 +96,7 @@ def filtSignal(data, dt=0.01, wn=10, btype='lowpass', order=1):
     '''
     
     res = []
-    n, s = scipy.signal.butter(order, wn, fs=1 / dt, btype=btype)
+    n, s = scipy.signal.butter(order, wn, fs=1/dt, btype=btype)
     for d in data:
         d = scipy.signal.filtfilt(n, s, d, axis=0)
         res.append(d)

@@ -15,6 +15,7 @@ class IMUTracker:
         # ---- parameters ----
         self.sampling = sampling
         self.dt = 1 / sampling    # second
+        self.dts = self.dt**2   # second squared
         self.data_order = data_order
 
         # ---- helpers ----
@@ -205,7 +206,7 @@ class IMUTracker:
 
         a_nav = []
         for d in data:
-            a_nav.append(self.attitudeTrack(d, self._init_list)[0])
+            a_nav.append(self.attitudeTrack(d)[0])
         a_nav = np.array(a_nav)
 
         sample_number = np.shape(a_nav)[0]
@@ -282,7 +283,7 @@ class IMUTracker:
         '''
 
         # sample_number = np.shape(a_nav)[0]
-        velocities = []
+        # velocities = []
         # prevt = -1
         still_phase = False
 
@@ -296,8 +297,8 @@ class IMUTracker:
                 predict_v = v + at * self.dt
 
                 v_drift_rate = predict_v / (self._t - self._prevt)
-                for i in range(self._t - self._prevt - 1):
-                    velocities[self._prevt + 1 + i] -= (i + 1) * v_drift_rate.T[0]
+                # for i in range(self._t - self._prevt - 1):
+                v -= v_drift_rate.T[0]
 
             v = np.zeros((3, 1))
             self._prevt = self._t
@@ -306,13 +307,13 @@ class IMUTracker:
             v = v + at * self.dt
             still_phase = False
 
-        velocities.append(v.T[0])
+        # velocities.append(v.T[0])
             # t += 1
 
-        velocities = np.array(velocities)
-        return velocities
+        # velocities = np.array(velocities)
+        return v.T[0]
 
-    def positionTrack(self, a_nav, velocities):
+    def positionTrack(self, a_nav):
         '''
         Simple integration of acc data and velocity data.
         
@@ -324,28 +325,26 @@ class IMUTracker:
         Modfied to store the previous iteration's position and add the current velocity to it
         '''
 
-        sample_number = np.shape(a_nav)[0]
-        positions = []
+        # sample_number = np.shape(a_nav)[0]
+        # positions = []
 
-        t = 0
-        while t < sample_number:
-            at = a_nav[t, np.newaxis].T
-            vt = velocities[t, np.newaxis].T
+        # t = 0
+        # while t < sample_number:
+        at = a_nav[np.newaxis].T
+        # vt = velocities[np.newaxis].T
 
-            self._p = self._p + vt * self.dt + 0.5 * at * self.dt**2
-            positions.append(self._p.T[0])
-            t += 1
+        # self._p = self._p + vt * self.dt + 0.5 * at * self.dt**2
+        self._p = self._p + at * self.dts
+        # positions.append(self._p.T[0])
+        # t += 1
 
-        positions = np.array(positions)
-        return positions
+        # positions = np.array(positions)
+        # return positions
+        return self._p.T[0]
     
     def calculatePosition(self, data):
         # EKF step
         a_nav, orix, oriy, oriz = self.attitudeTrack(data)
-        # Acceleration correction step
-        a_nav_filtered = a_nav - self._an_drift_rate
-        # ZUPT step
-        v = self.zupt(a_nav_filtered, threshold=0.2)
-        # Integration Step
-        return self.positionTrack(a_nav_filtered, v)[0]  
-    
+        # filtered_a_nav = filtSignal([a_nav], dt=self.dt, wn=5, btype='highpass')[0]
+        # filtered_a_nav = a_nav
+        return self.positionTrack(a_nav)
