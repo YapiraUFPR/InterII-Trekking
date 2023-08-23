@@ -31,11 +31,11 @@ servo_motor = servo.Servo(pwm, min_pulse=750, max_pulse=2250)
 for k in range(3):
     for angle in range(0, 180, 5):  # 0 - 180 degrees, 5 degrees at a time.
         pi.set_servo_pulsewidth(ESC, 1400 + angle*2)
-        servo_motor.angle = angle
+        #servo_motor.angle = angle
         time.sleep(0.05)
-    for angle in range(180, 0, -5): # 180 - 0 degrees, 5 degrees at a time.
-        pi.set_servo_pulsewidth(ESC, 1400 + angle*2)
-        servo_motor.angle = angle
+    for angle in range(0, 180, 5): # 180 - 0 degrees, 5 degrees at a time.
+        pi.set_servo_pulsewidth(ESC, 1400 - angle*2)
+        #servo_motor.angle = angle
         time.sleep(0.05)
 
 pi.set_servo_pulsewidth(ESC, 0)
