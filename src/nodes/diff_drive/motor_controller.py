@@ -4,19 +4,19 @@ from sys import argv
 import board
 import pwmio
 from adafruit_motor import servo
+from esc import Esc
 
-PWM_MAX = 65535
 ESC_PIN = board.D2
 SERVO_PIN = board.D3
 
 servo_motor = None
-esc_pwm = None
+esc = None
 
 def twist_callback(msg):
     global servo_motor
-    global esc_pwm
+    global esc
 
-    esc_pwm = (msg.linear.x / 100) * PWM_MAX
+    esc.speed = msg.linear.x
     servo_motor.angle = msg.angular.z
 
 def main():
@@ -30,8 +30,8 @@ def main():
     node.get_logger().info('control node launched.')
 
     # esc init
-    global esc_pwm
-    esc_pwm = pwmio.PWMOut(ESC_PIN, frequency=50)
+    global esc
+    esc = Esc(ESC_PIN)
 
     # servo init
     global servo_motor

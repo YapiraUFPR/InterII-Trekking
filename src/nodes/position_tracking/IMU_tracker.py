@@ -1,6 +1,10 @@
 import numpy as np
-from numpy.linalg import inv, norm
 from mathlib import *
+
+"""
+Credits: https://github.com/LibofRelax/IMU-Position-Tracking
+Modified by Gabriel Pontarolo
+"""
 
 class IMUTracker:
 
@@ -113,9 +117,6 @@ class IMUTracker:
 
         # all vectors are column vectors
 
-        # t = 0
-        # while t < sample_number:
-
         # ------------------------------- #
         # ---- 0. Data Preparation ----
         # ------------------------------- #
@@ -188,130 +189,7 @@ class IMUTracker:
         oriy = orin.T[1, :]
         oriz = orin.T[2, :]
 
-        # t += 1
-
         return (a_nav, orix, oriy, oriz)
-    
-    def calcAccErr(self, data, threshold=0.2):
-        '''
-        Calculates drift in acc data assuming that
-        the device stays still during initialization and ending period.
-        The initial and final acc are inferred to be exactly 0.
-        
-        @param a_nav: acc data, raw output from the kalman filter
-        @param threshold: acc threshold to detect the starting and ending point of motion
-        
-        Return: drift vector
-        '''
-
-        a_nav = []
-        for d in data:
-            a_nav.append(self.attitudeTrack(d)[0])
-        a_nav = np.array(a_nav)
-
-        sample_number = np.shape(a_nav)[0]
-        t_start = 0
-        for t in range(sample_number):
-            at = a_nav[t]
-            if np.linalg.norm(at) > threshold:
-                t_start = t
-                break
-
-        t_end = 0
-        for t in range(sample_number - 1, -1, -1):
-            at = a_nav[t]
-            if np.linalg.norm(at - a_nav[-1]) > threshold:
-                t_end = t
-                break
-
-        an_drift = a_nav[t_end:].mean(axis=0)
-        an_drift_rate = an_drift / (t_end - t_start)
-        return an_drift_rate
-    
-    def removeAccErr(self, a_nav, threshold=0.2, filter=False, wn=(0.01, 15)):
-        '''
-        Removes drift in acc data assuming that
-        the device stays still during initialization and ending period.
-        The initial and final acc are inferred to be exactly 0.
-        The final acc data output is passed through a bandpass filter to further reduce noise and drift.
-        
-        @param a_nav: acc data, raw output from the kalman filter
-        @param threshold: acc threshold to detect the starting and ending point of motion
-        @param wn: bandpass filter cutoff frequencies
-        
-        Return: corrected and filtered acc data
-        '''
-
-        sample_number = np.shape(a_nav)[0]
-        t_start = 0
-        for t in range(sample_number):
-            at = a_nav[t]
-            if np.linalg.norm(at) > threshold:
-                t_start = t
-                break
-
-        t_end = 0
-        for t in range(sample_number - 1, -1, -1):
-            at = a_nav[t]
-            if np.linalg.norm(at - a_nav[-1]) > threshold:
-                t_end = t
-                break
-
-        an_drift = a_nav[t_end:].mean(axis=0)
-        an_drift_rate = an_drift / (t_end - t_start)
-
-        for i in range(t_end - t_start):
-            a_nav[t_start + i] -= (i + 1) * an_drift_rate
-
-        for i in range(sample_number - t_end):
-            a_nav[t_end + i] -= an_drift
-
-        if filter:
-            filtered_a_nav = filtSignal([a_nav], dt=self.dt, wn=wn, btype='bandpass')[0]
-            return filtered_a_nav
-        else:
-            return a_nav
-
-    def zupt(self, a_nav, threshold):
-        '''
-        Applies Zero Velocity Update(ZUPT) algorithm to acc data.
-        
-        @param a_nav: acc data
-        @param threshold: stationary detection threshold, the more intense the movement is the higher this should be
-
-        Return: velocity data
-        '''
-
-        # sample_number = np.shape(a_nav)[0]
-        # velocities = []
-        # prevt = -1
-        still_phase = False
-
-        v = np.zeros((3, 1))
-        # t = 0
-        # while t < sample_number:
-        at = a_nav[np.newaxis].T
-
-        if np.linalg.norm(at) < threshold:
-            if not still_phase:
-                predict_v = v + at * self.dt
-
-                v_drift_rate = predict_v / (self._t - self._prevt)
-                # for i in range(self._t - self._prevt - 1):
-                v -= v_drift_rate.T[0]
-
-            v = np.zeros((3, 1))
-            self._prevt = self._t
-            still_phase = True
-        else:
-            v = v + at * self.dt
-            still_phase = False
-
-        # velocities.append(v.T[0])
-            # t += 1
-
-        # velocities = np.array(velocities)
-        return v.T[0]
 
     def positionTrack(self, a_nav):
         '''
@@ -325,26 +203,10 @@ class IMUTracker:
         Modfied to store the previous iteration's position and add the current velocity to it
         '''
 
-        # sample_number = np.shape(a_nav)[0]
-        # positions = []
-
-        # t = 0
-        # while t < sample_number:
         at = a_nav[np.newaxis].T
-        # vt = velocities[np.newaxis].T
-
-        # self._p = self._p + vt * self.dt + 0.5 * at * self.dt**2
-        self._p = self._p + at * self.dts
-        # positions.append(self._p.T[0])
-        # t += 1
-
-        # positions = np.array(positions)
-        # return positions
+        self._p += at * self.dts
         return self._p.T[0]
     
     def calculatePosition(self, data):
-        # EKF step
         a_nav, orix, oriy, oriz = self.attitudeTrack(data)
-        # filtered_a_nav = filtSignal([a_nav], dt=self.dt, wn=5, btype='highpass')[0]
-        # filtered_a_nav = a_nav
         return self.positionTrack(a_nav)
