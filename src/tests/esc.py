@@ -1,31 +1,46 @@
-#!/usr/bin/python3
-import time
-import board
-import pwmio
+import pigpio 
+from time import sleep
 
-ESC_PIN = board.D4
-PWM_MAX = 65535
+class Esc:
 
-pwm = pwmio.PWMOut(ESC_PIN, frequency=50)
+    def __init__(self, pin, min_pulse=500, max_pulse=2500):
+        
+        try:
+            self.pi = pigpio.pi()
+        except Exception:
+            print("Couldn't initialize esc. Did you run 'sudo pigpio'?")
+            exit(1)
 
-def dt2pwm(dt):
-    return int(PWM_MAX * (dt/100))
+        self.pin = pin
+        self.min_pulse = min_pulse
+        self.max_pulse = max_pulse
+        self.half_pulse = (max_pulse - min_pulse) // 2
 
-def pw2dt(pw):
-    return int(pw/(1/50))
+        self.pi.set_servo_pulsewidth(self.pin, 0)
+        sleep(1)
+        self.pi.set_servo_pulsewidth(self.pin, self.half_pulse)
+        self.speed = 0
+        print("Esc initialized")
 
-while True:
-    for pw in range(700, 2000): 
-        # pwm.duty_cycle = int(duty_cycle / 100 * PWM_MAX)
-        dc = pw2dt(pw)
-        pwm.duty_cycle = dc 
-        print(f'Duty Cycle: {dc}')
-        time.sleep(1)
+    @property
+    def speed(self):
+        """
+        Motor speed. Between -100 to 100.
+        """
+        return self.speed
 
+    @speed.setter
+    def speed(self, value):
+        self.speed = 100 if value > 100 else value
+        self.speed = -100 if value < -100 else value
 
-# pwm.duty_cycle = dt2pwm(75)
-# time.sleep(1)
-# pwm.duty_cycle = dt2pwm(60)
-# time.sleep(1)
-# pwm.duty_cycle = dt2pwm(30)
-# time.sleep(1)
+        pwm = self.speed*10 + 1500
+        self.pi.set_servo_pulsewidth(self.pin, pwm)
+        
+    def stop(self):
+        self.pi.set_servo_pulsewidth(self.pin, self.half_pulse)
+
+    def __del__(self):
+        self.pi.set_servo_pulsewidth(self.pin, 0)
+        self.pi.stop()
+        print("Esc stopped.")
