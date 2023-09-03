@@ -22,15 +22,15 @@ class Esc:
         self.speed = 0
         print("Esc initialized")
 
-    @property
-    def speed(self):
-        """
-        Motor speed. Between -100 to 100.
-        """
-        return self.speed
+    # @property
+    # def speed(self):
+    #     """
+    #     Motor speed. Between -100 to 100.
+    #     """
+    #     return self.speed
 
-    @speed.setter
-    def speed(self, value):
+    # @speed.setter
+    def set_speed(self, value):
         self.speed = 100 if value > 100 else value
         self.speed = -100 if value < -100 else value
 
