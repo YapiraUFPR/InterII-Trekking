@@ -79,8 +79,8 @@ def main():
 		
 	pub = node.create_publisher(Twist, 'cmd_vel', rclpy.qos.qos_profile_system_default)
 
-	speed = 0.5
-	turn = 1.0
+	speed = 0.3
+	turn = 0.3
 	x = 0
 	y = 0
 	z = 0

@@ -91,12 +91,7 @@ def main():
 	esc = Esc(ESC_PIN)
 	servo_pwm = pwmio.PWMOut(SERVO_PIN, frequency=50)
 	servo_motor = servo.Servo(servo_pwm, min_pulse=750, max_pulse=2250)
-	# servo_motor.angle = -180
-	sleep(1)
-	servo_motor.angle = 0
-	sleep(1)
 	servo_motor.angle = 90
-	sleep(1)
 
 	servo_ang =  90
 
