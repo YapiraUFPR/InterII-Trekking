@@ -6,7 +6,7 @@ from adafruit_motor import servo
 from esc import Esc
 from time import sleep
 
-ESC_PIN = 8
+ESC_PIN = 14
 SERVO_PIN = board.D18
 
 settings = termios.tcgetattr(sys.stdin)
@@ -80,7 +80,7 @@ def vels(speed,turn):
 
 def main():	
 
-	speed = 0.5
+	speed = 0.1
 	turn = 0.1
 	x = 0
 	y = 0
@@ -88,12 +88,15 @@ def main():
 	th = 0
 	status = 0
 
-	esc = Esc(ESC_PIN)
+	# esc_pwm = pwmio.PWMOut(ESC_PIN, frequency=100)
+	# esc = servo.ContinuousServo(esc_pwm, min_pulse=500, max_pulse=2500)
+	# esc.throttle = 0
+	esc =  Esc(ESC_PIN)
 	servo_pwm = pwmio.PWMOut(SERVO_PIN, frequency=50)
 	servo_motor = servo.Servo(servo_pwm, min_pulse=750, max_pulse=2250)
 	servo_motor.angle = 90
 
-	servo_ang =  90
+	angle =  90
 
 	try:
 		print(msg)
@@ -125,11 +128,19 @@ def main():
 			# twist.linear.x = x*speed; twist.linear.y = y*speed; twist.linear.z = z*speed;
 			# twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = th*turn
 			# pub.publish(twist)
-			servo_ang += ((th*turn) + 1)
-			actspeed = (x*speed)
-			print(th, turn)
-			# esc.set_speed(x*speed)
-			# servo_motor.angle = servo_ang
+			linear_x = x*speed
+			angular_z = th*turn
+
+			angle += -angular_z * 90
+			angle = int(max(0, min(angle, 180)))
+
+			mspeed = linear_x * 100
+			mspeed = int(max(-100, min(mspeed, 100)))
+
+			print(mspeed, angle)
+
+			esc.set_speed(mspeed)
+			servo_motor.angle = angle
 
 	except Exception as e:
 		print(e)

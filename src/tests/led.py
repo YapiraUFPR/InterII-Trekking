@@ -21,6 +21,8 @@ def main():
     # sensor initialization
     i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
     tcs = TCS34725(i2c,address=TCS_ADDR) #0x29
+    tcs.gain = 60
+    tcs.integration_time = 200
 
     # led initialization
     led_pin = DigitalInOut(LED_PIN)

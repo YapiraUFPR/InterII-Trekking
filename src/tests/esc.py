@@ -42,5 +42,5 @@ class Esc:
 
     def __del__(self):
         self.pi.set_servo_pulsewidth(self.pin, 0)
-        self.pi.stop()
+        # self.pi.stop()
         print("Esc stopped.")
