@@ -7,7 +7,7 @@
 import rclpy
 from adafruit_tcs34725 import TCS34725
 import board
-import busio
+import adafruit_bitbangio as bitbangio
 from digitalio import DigitalInOut 
 from std_msgs.msg import ColorRGBA
 from sys import argv
@@ -19,6 +19,7 @@ LED_PIN = board.D13
 MARK_COLOR_LOWER = [200, 200, 200]
 MARK_COLOR_UPPER = [255, 255, 255]
 
+SAMPLE_RATE = 400
 LED_DELAY = 0.5
 
 led = None
@@ -35,7 +36,7 @@ def main():
     node.get_logger().info('led_control node launched.')
 
     # sensor initialization
-    i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
+    i2c = bitbangio.I2C(scl=board.D27, sda=board.D22, frequency=SAMPLE_RATE*1000)
     tcs = TCS34725(i2c,address=TCS_ADDR) #0x29
     tcs.integration_time = 150  # time to read the signal, between 2.4 and 614.4 milliseconds
     tcs.gain = 16 # ampplification factor of the light, 1, 4, 16, 60
@@ -43,6 +44,7 @@ def main():
     # led initialization
     global led
     led = DigitalInOut(LED_PIN)
+    led.switch_to_output(value=False)
 
     color_msg = ColorRGBA()
 
