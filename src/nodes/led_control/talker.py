@@ -16,8 +16,8 @@ from time import time
 TCS_ADDR = 0x29
 LED_PIN = board.D13
 
-MARK_COLOR_LOWER = [200, 200, 200]
-MARK_COLOR_UPPER = [255, 255, 255]
+MARK_COLOR_LOWER = [22, 22, 0]
+MARK_COLOR_UPPER = [30, 30, 5]
 
 SAMPLE_RATE = 400
 LED_DELAY = 0.5
@@ -60,6 +60,7 @@ def main():
         color_msg.b = b
 
         color = [r, g, b]
+        print(color, temp, lux)
 
         if all(MARK_COLOR_LOWER[i] < color[i] < MARK_COLOR_UPPER[i] for i in range(3)):
             led.value = True

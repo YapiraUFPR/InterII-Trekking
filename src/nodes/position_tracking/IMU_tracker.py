@@ -47,20 +47,20 @@ class IMUTracker:
         # discard the first few readings
         # for some reason they might fluctuate a lot
         data = callib_data[5:30]
-        w = data[:, self._widx[0]:self._widx[1]]
-        a = data[:, self._aidx[0]:self._aidx[1]]
-        m = data[:, self._midx[0]:self._midx[1]]
+        w = data[self._widx[0]:self._widx[1]]
+        a = data[self._aidx[0]:self._aidx[1]]
+        m = data[self._midx[0]:self._midx[1]]
 
         # ---- gravity ----
         gn = -a.mean(axis=0)
-        gn = gn[:, np.newaxis]
+        gn = gn[np.newaxis]
         # save the initial magnitude of gravity
         g0 = np.linalg.norm(gn)
 
         # ---- magnetic field ----
         mn = m.mean(axis=0)
         # magnitude is not important
-        mn = normalized(mn)[:, np.newaxis]
+        mn = normalized(mn)[np.newaxis]
 
         # ---- compute noise covariance ----
         avar = a.var(axis=0)
@@ -77,7 +77,6 @@ class IMUTracker:
         mag_noise = noise_coefficient['m'] * np.linalg.norm(mvar)
 
         self._init_list = (gn, g0, mn, gyro_noise, gyro_bias, acc_noise, mag_noise)
-        self._an_drift_rate = self.calcAccErr(data)
 
     def attitudeTrack(self, data):
         '''

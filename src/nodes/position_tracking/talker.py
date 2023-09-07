@@ -51,7 +51,7 @@ def position_tracker():
     while not finished_callib and rclpy.ok():
         rclpy.spin_once(node)
 
-        if len(imu_data) > 0 and len(mag_data) > 0:
+        if len(imu_data) > 0 and len(mag_data) > 0:            
             callib_data += imu_data + mag_data
             imu_data = []
             mag_data = []
@@ -66,7 +66,6 @@ def position_tracker():
     i = 0
     while rclpy.ok():
         rclpy.spin_once(node)
-
         if len(imu_data) > 0 and len(mag_data) > 0:
             data = []
             data += imu_data + mag_data
@@ -75,6 +74,8 @@ def position_tracker():
             data_np = np.array(data, dtype=np.float32)
 
             p = tracker.calculatePosition(data_np)
+
+            print(p)
 
             # Publish position
             msg = PoseStamped()

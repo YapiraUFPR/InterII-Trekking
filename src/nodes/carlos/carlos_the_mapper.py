@@ -8,21 +8,11 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import PoseStamped
-import pickle
+import rdp
 from sys import argv
 
 points = np.array([])
 raw_points = np.array([])
-
-def save_trajectory():
-    global x_positions
-    global y_positions
-
-    spline = CubicSpline(x_positions, y_positions)
-
-    # Save the CubicSpline object to a file using pickle
-    with open('cubic_spline.pkl', 'wb') as f:
-        pickle.dump(spline, f)
 
 def position_callback(msg):
     global points

@@ -17,6 +17,7 @@ from adafruit_bno08x import (
     BNO_REPORT_ROTATION_VECTOR,
 )
 from adafruit_bno08x.i2c import BNO08X_I2C
+from time import sleep
 
 def bno08x_node():
     rclpy.init(args=sys.argv)
@@ -31,7 +32,7 @@ def bno08x_node():
     rate = node.create_rate(100)  # frequency in Hz
     node.get_logger().info('bno08x node launched.')
 
-    i2c = busio.I2C(board.SCL, board.SDA, frequency=800000)
+    i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
     bno = BNO08X_I2C(i2c, address=0x4b)  # BNO080 (0x4b) BNO085 (0x4a)
 
     bno.enable_feature(BNO_REPORT_ACCELEROMETER)
@@ -41,7 +42,9 @@ def bno08x_node():
 
     time.sleep(0.5)  # ensure IMU is initialized
 
-    while rclpy.ok():
+    print("will send messages")
+
+    while True:
         raw_msg = Imu()
         raw_msg.header.stamp = node.get_clock().now().to_msg()
 
@@ -81,8 +84,9 @@ def bno08x_node():
         # status_msg.name = "bno08x IMU"
         # status_msg.message = ""
         # status_pub.publish(status_msg)
+        print(raw_msg, mag_msg)
 
-        rate.sleep()
+        sleep(1/400)
 
     node.get_logger().info('bno08x node finished')
     node.destroy_node()
