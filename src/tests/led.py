@@ -4,49 +4,77 @@
 # LED strip should light up when color sensor detects the mark color
 # Author: Gabriel Pontarolo
 
+# import rclpy
 from adafruit_tcs34725 import TCS34725
 import board
 import busio
 from digitalio import DigitalInOut 
+# from std_msgs.msg import ColorRGBA
 from sys import argv
-from time import sleep
+from time import time
+import adafruit_bitbangio as bitbangio
 
-MARK_COLOR_LOWER = [255, 255, 255]
-MARK_COLOR_UPPER = [200, 200, 200]
 TCS_ADDR = 0x29
-LED_PIN = board.D13
+LED_PIN = board.D4
+
+MARK_COLOR_LOWER = [0, 0, 17]
+MARK_COLOR_UPPER = [255, 255, 255]
+
+LED_DELAY = 0.5
+SAMPLE_RATE = 400
+
+led = None
 
 def main():
 
+    # rclpy.init(args=argv)
+
+    # # node intialization
+    # global node 
+    # node = rclpy.create_node('led_control')
+    # color_pub = node.create_publisher(ColorRGBA, 'led_control/color', 10)
+    # rate = node.create_rate(100) # frequency in Hz
+    # node.get_logger().info('led_control node launched.')
+
     # sensor initialization
-    i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
-    tcs = TCS34725(i2c,address=TCS_ADDR) #0x29
-    tcs.gain = 60
-    tcs.integration_time = 200
+    tcs_i2c = bitbangio.I2C(scl=board.D27, sda=board.D22, frequency=SAMPLE_RATE*1000)
+    tcs = TCS34725(tcs_i2c,address=0x29) #0x29
+    tcs.integration_time = 50  # time to read the signal, between 2.4 and 614.4 milliseconds
+    tcs.gain = 16 # ampplification factor of the light, 1, 4, 16, 60
 
     # led initialization
-    led_pin = DigitalInOut(LED_PIN)
+    global led
+    led = DigitalInOut(LED_PIN)
+    led.switch_to_output(value=False)
 
-    led_on = False
+    # color_msg = ColorRGBA()
+
+    led_countdown = 0
     while True:
 
         r, g, b = tcs.color_rgb_bytes
         temp = tcs.color_temperature
         lux = tcs.lux
+        
+        # color_msg.r = r
+        # color_msg.g = g
+        # color_msg.b = b
 
         color = [r, g, b]
+        print(color,  lux, temp)
 
-        if not led_on and all(MARK_COLOR_LOWER[i] < color[i] < MARK_COLOR_UPPER[i] for i in range(3)):
-            led_pin.value = True
-            led_on = True
+        if all(MARK_COLOR_LOWER[i] < color[i] < MARK_COLOR_UPPER[i] for i in range(3)):
+            led.value = True
+            led_countdown = time() + LED_DELAY
 
-        print(f"Color: {color}")
-        print(f"Temperature: {temp}")
-        print(f"Lux: {lux}")
-        print()
-        
-        sleep(0.5)
+        if time() > led_countdown:
+            led.value = False
 
+        # color_pub.publish(color_msg)
 
-if __name__ == "__main__":
+try: 
     main()
+except Exception as e:
+    print(e)
+    if led != None:
+        led.value = False

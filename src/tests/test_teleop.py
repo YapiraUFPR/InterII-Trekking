@@ -80,8 +80,8 @@ def vels(speed,turn):
 
 def main():	
 
-	speed = 0.1
-	turn = 0.1
+	speed = 0.0
+	turn = 0.2
 	x = 0
 	y = 0
 	z = 0
