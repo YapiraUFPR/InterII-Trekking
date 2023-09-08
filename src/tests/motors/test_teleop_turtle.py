@@ -81,7 +81,7 @@ Communications Failed
 import board
 import pwmio
 from adafruit_motor import servo
-from esc import Esc
+from tests.motors.esc import Esc
 
 ESC_PIN = 14
 SERVO_PIN = board.D18

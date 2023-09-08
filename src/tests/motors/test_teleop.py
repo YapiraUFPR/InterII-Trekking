@@ -3,7 +3,7 @@ import sys, select, termios, tty
 import board
 import pwmio
 from adafruit_motor import servo
-from esc import Esc
+from tests.motors.esc import Esc
 from time import sleep
 
 ESC_PIN = 14
