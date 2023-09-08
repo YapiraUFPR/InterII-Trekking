@@ -28,7 +28,7 @@ class IMUTracker:
         self._aidx = idx[data_order['a']]
         self._midx = idx[data_order['m']]
 
-        self._p = np.array([[0, 0, 0]]).T
+        self._p = np.array([[0, 0, 0]], dtype='float64').T
         self._prevt = -1
         self._t = 0
 
@@ -80,7 +80,7 @@ class IMUTracker:
 
     def attitudeTrack(self, data):
         '''
-        Removes gravity from acceleration data and transform it into navitgaion frame.
+        Removes gravity from acceleration data and transform it into navigation frame.
         Also tracks device's orientation.
         
         @param data: (9) ndarray

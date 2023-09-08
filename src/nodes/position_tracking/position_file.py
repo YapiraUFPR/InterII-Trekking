@@ -13,7 +13,7 @@ mag_data = []
 
 def position_tracker():
 
-    imu_data = open("data.txt")
+    imu_data = open(r"/home/vini/Documents/Yapira/Bedman-Trekker/src/nodes/position_tracking/data.txt")
 
     raw_data = []
     for line in imu_data.readlines():

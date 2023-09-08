@@ -60,9 +60,9 @@ def G(q):
 
 def Hhelper(q, vector):
     # just for convenience
-    x = vector.T[0][0]
-    y = vector.T[0][1]
-    z = vector.T[0][2]
+    x = vector[0][0]
+    y = vector[0][1]
+    z = vector[0][2]
     q0 = q.T[0][0]
     q1 = q.T[0][1]
     q2 = q.T[0][2]
