@@ -8,11 +8,10 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import PoseStamped
-import rdp
 from sys import argv
 
 points = np.array([])
-raw_points = np.array([])
+raw_data = np.array([])
 
 def position_callback(msg):
     global points
@@ -20,9 +19,9 @@ def position_callback(msg):
     np.append(points, [x, y])
 
 def imu_callback(msg):
-    global raw_points
+    global raw_data
     x, y, z = msg.linear_acceleration
-    np.append(raw_points, [x, y])
+    np.append(raw_data, [x, y])
 
 def main():
 
@@ -38,6 +37,6 @@ def main():
 
 try:
     main()
-except KeyboardInterrupt:
+finally:
     np.save('points.npy', points)
-    np.save('raw_points.npy', raw_points)
+    np.save('raw_data.npy', raw_data)

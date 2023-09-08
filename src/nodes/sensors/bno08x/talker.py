@@ -36,9 +36,9 @@ def bno08x_node():
     bno = BNO08X_I2C(i2c, address=0x4b)  # BNO080 (0x4b) BNO085 (0x4a)
 
     bno.enable_feature(BNO_REPORT_ACCELEROMETER)
-    bno.enable_feature(BNO_REPORT_GYROSCOPE)
+    # bno.enable_feature(BNO_REPORT_GYROSCOPE)
     bno.enable_feature(BNO_REPORT_MAGNETOMETER)
-    bno.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+    # bno.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 
     time.sleep(0.5)  # ensure IMU is initialized
 
@@ -58,11 +58,11 @@ def bno08x_node():
         raw_msg.angular_velocity.y = gyro_y
         raw_msg.angular_velocity.z = gyro_z
 
-        quat_i, quat_j, quat_k, quat_real = bno.quaternion
-        raw_msg.orientation.w = quat_i
-        raw_msg.orientation.x = quat_j
-        raw_msg.orientation.y = quat_k
-        raw_msg.orientation.z = quat_real
+        # quat_i, quat_j, quat_k, quat_real = bno.quaternion
+        # raw_msg.orientation.w = quat_i
+        # raw_msg.orientation.x = quat_j
+        # raw_msg.orientation.y = quat_k
+        # raw_msg.orientation.z = quat_real
 
         raw_msg.orientation_covariance[0] = -1
         raw_msg.linear_acceleration_covariance[0] = -1

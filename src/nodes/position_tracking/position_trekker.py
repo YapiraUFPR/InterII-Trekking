@@ -63,7 +63,6 @@ def position_tracker():
     node.get_logger().info('callibration finished.')
 
     node.get_logger().info('position tracking started.')
-    i = 0
     while rclpy.ok():
         rclpy.spin_once(node)
         if len(imu_data) > 0 and len(mag_data) > 0:
@@ -84,8 +83,6 @@ def position_tracker():
             msg.pose.position.y = p[1]
             msg.pose.position.z = p[2]
             pos_pub.publish(msg)
-
-            i += 1
 
 if __name__ == '__main__':
     position_tracker()

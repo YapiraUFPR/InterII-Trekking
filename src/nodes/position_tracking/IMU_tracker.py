@@ -47,9 +47,9 @@ class IMUTracker:
         # discard the first few readings
         # for some reason they might fluctuate a lot
         data = callib_data[5:30]
-        w = data[self._widx[0]:self._widx[1]]
-        a = data[self._aidx[0]:self._aidx[1]]
-        m = data[self._midx[0]:self._midx[1]]
+        w = data[self._widx[0]:self._widx[1]].T
+        a = data[self._aidx[0]:self._aidx[1]].T
+        m = data[self._midx[0]:self._midx[1]].T
 
         # ---- gravity ----
         gn = -a.mean(axis=0)
@@ -142,8 +142,10 @@ class IMUTracker:
         # Use normalized measurements to reduce error!
 
         # ---- acc and mag prediction ----
-        pa = normalized(-rotate(q) @ gn)
-        pm = normalized(rotate(q) @ mn)
+        print(-rotate(q))
+        print(gn)
+        pa = normalized(-rotate(q) @ gn.T)
+        pm = normalized(rotate(q) @ mn.T)
 
         # ---- residual ----
         Eps = np.vstack((normalized(at), mt)) - np.vstack((pa, pm))
