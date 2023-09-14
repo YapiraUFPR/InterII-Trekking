@@ -11,6 +11,11 @@ filtered = rdp(raw_points, epsilon=EPS)
 
 np.save('map.npy', raw_points)
 
+raw_img = map_img = np.ones((100, 100), dtype=np.uint8)
+for [x, y] in raw_points:
+    cv2.circle(map_img, (x, y), 3, (255, 255, 255), 2)
+cv2.imwrite("raw_img.png", raw_img)
+
 map_img = np.ones((100, 100), dtype=np.uint8)
 for [x, y] in filtered:
     cv2.circle(map_img, (x, y), 3, (255, 255, 255), 2)

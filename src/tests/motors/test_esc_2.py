@@ -8,7 +8,7 @@ from adafruit_motor import servo
 ESC=14  #Connect the ESC in this GPIO pin 
 SERVO_PIN = board.D17
 
-pi = pigpio.pi();
+pi = pigpio.pi()
 pi.set_servo_pulsewidth(ESC, 0) 
 time.sleep(1)
 pi.set_servo_pulsewidth(ESC, 1500)

@@ -10,18 +10,20 @@ from sensor_msgs.msg import Imu
 from geometry_msgs.msg import PoseStamped
 from sys import argv
 
-points = np.array([])
-raw_data = np.array([])
+points = []
+raw_data = []
 
 def position_callback(msg):
     global points
-    x, y, z = msg.pose.position
-    np.append(points, [x, y])
+    x = msg.pose.position.x
+    y = msg.pose.position.y 
+    points.append([x, y])
 
 def imu_callback(msg):
     global raw_data
-    x, y, z = msg.linear_acceleration
-    np.append(raw_data, [x, y])
+    x = msg.linear_acceleration.x 
+    y = msg.linear_acceleration.y
+    raw_data.append([x, y])
 
 def main():
 
@@ -35,8 +37,11 @@ def main():
     imu_sub, pos_sub # prevent unused variable warning
     node.get_logger().info('carlos node launched.')
 
+    rclpy.spin(node)
 try:
     main()
 finally:
-    np.save('points.npy', points)
-    np.save('raw_data.npy', raw_data)
+    points_np = np.array(points)
+    raw_data_np = np.array(raw_data)
+    np.save('points.npy', points_np)
+    np.save('raw_data.npy', raw_data_np)

@@ -5,6 +5,7 @@ from sensor_msgs.msg import Imu
 from sensor_msgs.msg import MagneticField
 from sys import argv
 import numpy as np
+import time
 
 CALIB_DATA_SIZE = 1000
 
@@ -13,16 +14,12 @@ imu_data = []
 mag_data = []
 
 def imu_callback(msg:Imu):
-    # global finished_callib
-    # if not finished_callib:
 
     global imu_data
     imu_data = [msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z, 
                 msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z]
 
 def mag_callback(msg:MagneticField):
-    # global finished_callib
-    # if not finished_callib:
 
     global mag_data
     mag_data = [msg.magnetic_field.x, msg.magnetic_field.y, msg.magnetic_field.z]
@@ -48,10 +45,10 @@ def position_tracker():
 
     node.get_logger().info('waiting for callibration data...')
     callib_data = []
-    while not finished_callib and rclpy.ok():
+    while not finished_callib:
         rclpy.spin_once(node)
 
-        if len(imu_data) > 0 and len(mag_data) > 0:            
+        if len(imu_data) > 0 and len(mag_data) > 0:
             callib_data.append(imu_data + mag_data)
             imu_data = []
             mag_data = []
@@ -59,12 +56,19 @@ def position_tracker():
         if len(callib_data) > CALIB_DATA_SIZE:
             finished_callib = True
 
-    tracker.initialize(np.array(np.array(callib_data, dtype=np.float32)))
+        time.sleep(1/400)
+
+
+    callib_data_np = np.array(callib_data, dtype=np.float32)
+    print(callib_data_np.shape)
+    tracker.initialize(callib_data_np)
     node.get_logger().info('callibration finished.')
 
     node.get_logger().info('position tracking started.')
-    while rclpy.ok():
+    i = 0
+    while True:
         rclpy.spin_once(node)
+
         if len(imu_data) > 0 and len(mag_data) > 0:
             data = []
             data += imu_data + mag_data
@@ -74,8 +78,6 @@ def position_tracker():
 
             p = tracker.calculatePosition(data_np)
 
-            # print(p)
-
             # Publish position
             msg = PoseStamped()
             msg.header.stamp = node.get_clock().now().to_msg()
@@ -83,6 +85,10 @@ def position_tracker():
             msg.pose.position.y = p[1]
             msg.pose.position.z = p[2]
             pos_pub.publish(msg)
+
+            i += 1
+
+        time.sleep(1/400)
 
 if __name__ == '__main__':
     position_tracker()

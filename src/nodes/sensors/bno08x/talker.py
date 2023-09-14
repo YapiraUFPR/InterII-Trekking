@@ -36,13 +36,13 @@ def bno08x_node():
     bno = BNO08X_I2C(i2c, address=0x4b)  # BNO080 (0x4b) BNO085 (0x4a)
 
     bno.enable_feature(BNO_REPORT_ACCELEROMETER)
-    # bno.enable_feature(BNO_REPORT_GYROSCOPE)
+    bno.enable_feature(BNO_REPORT_GYROSCOPE)
     bno.enable_feature(BNO_REPORT_MAGNETOMETER)
     # bno.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 
     time.sleep(0.5)  # ensure IMU is initialized
 
-    print("will send messages")
+    print("Publishing IMU data...")
 
     while True:
         raw_msg = Imu()
@@ -84,7 +84,7 @@ def bno08x_node():
         # status_msg.name = "bno08x IMU"
         # status_msg.message = ""
         # status_pub.publish(status_msg)
-        print(raw_msg, mag_msg)
+        # print(raw_msg, mag_msg)
 
         sleep(1/400)
 

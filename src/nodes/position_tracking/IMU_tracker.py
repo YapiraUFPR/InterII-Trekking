@@ -142,8 +142,6 @@ class IMUTracker:
         # Use normalized measurements to reduce error!
 
         # ---- acc and mag prediction ----
-        print(-rotate(q))
-        print(gn)
         pa = normalized(-rotate(q) @ gn.T)
         pm = normalized(rotate(q) @ mn.T)
 
@@ -202,6 +200,7 @@ class IMUTracker:
         Return: 3D coordinates in navigation frame
 
         Modfied to store the previous iteration's position and add the current velocity to it
+        print(len(callib_data))
         '''
 
         at = a_nav[np.newaxis].T

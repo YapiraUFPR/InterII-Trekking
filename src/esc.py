@@ -22,8 +22,15 @@ class Esc:
         self.speed = 0
         print("Esc initialized")
 
-    def set_speed(self, value): 
+    # @property
+    # def speed(self):
+    #     """
+    #     Motor speed. Between -100 to 100.
+    #     """
+    #     return self.speed
 
+    # @speed.setter
+    def set_speed(self, value):
         self.speed = 100 if value > 100 else value
         self.speed = -100 if value < -100 else value
 
@@ -35,5 +42,5 @@ class Esc:
 
     def __del__(self):
         self.pi.set_servo_pulsewidth(self.pin, 0)
-        self.pi.stop()
+        # self.pi.stop()
         print("Esc stopped.")
