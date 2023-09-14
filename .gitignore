@@ -1,6 +1,5 @@
-*.npy
-*.png 
-data.txt
+Data/
+assets/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
