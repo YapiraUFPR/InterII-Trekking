@@ -29,4 +29,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-ros-base=0.10.0-1* \
     && rm -rf /var/lib/apt/lists/*
 
+# install pip requirements
+RUN apt-get update && apt-get install python3-pip -y
+COPY requirements.txt /requirements.txt
+RUN python3 -m pip install -r /requirements.txt
+
 RUN bash
