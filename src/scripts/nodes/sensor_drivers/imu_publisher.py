@@ -3,11 +3,8 @@
 # Modified by Gabriel Pontarolo, 2023
 
 import rclpy
+import yaml
 from sensor_msgs.msg import MagneticField, Imu
-from std_msgs.msg import Float64
-from diagnostic_msgs.msg import DiagnosticStatus
-import time
-import sys
 import board
 import busio
 from adafruit_bno08x import (
@@ -19,31 +16,36 @@ from adafruit_bno08x import (
 from adafruit_bno08x.i2c import BNO08X_I2C
 from time import sleep
 
-def bno08x_node():
-    rclpy.init(args=sys.argv)
+def imu_node():
 
+    # load config
+    with open("/home/user/ws/src/config/config.yaml", "r") as file:
+        config = yaml.safe_load(file)
+    node_name = config["imu"]["node"]
+    imu_topic = config["imu"]["imu_topic"]
+    mag_topic = config["imu"]["mag_topic"]
+    sample_rate = config["imu"]["sample_rate"]
+
+    # ros2 initialization
+    rclpy.init(args=None)
     global node
-    node = rclpy.create_node('bno08x')
+    node = rclpy.create_node(node_name)
+    raw_pub = node.create_publisher(Imu, imu_topic, 10)
+    mag_pub = node.create_publisher(MagneticField, mag_topic, 10)
+    rate = node.create_rate(sample_rate)  # frequency in Hz
+    logger = node.get_logger()
+    logger.info('Imu node launched.')
 
-    raw_pub = node.create_publisher(Imu, 'bno08x/raw', 10)
-    mag_pub = node.create_publisher(MagneticField, 'bno08x/mag', 10)
-    # status_pub = node.create_publisher(DiagnosticStatus, 'bno08x/status', 10)
-
-    rate = node.create_rate(100)  # frequency in Hz
-    node.get_logger().info('bno08x node launched.')
-
-    i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
+    # sensor initialization 
+    i2c = busio.I2C(board.SCL, board.SDA, frequency=sample_rate*1000)
     bno = BNO08X_I2C(i2c, address=0x4b)  # BNO080 (0x4b) BNO085 (0x4a)
-
     bno.enable_feature(BNO_REPORT_ACCELEROMETER)
     bno.enable_feature(BNO_REPORT_GYROSCOPE)
     bno.enable_feature(BNO_REPORT_MAGNETOMETER)
-    # bno.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+    sleep(0.5)  # ensure IMU is initialized
 
-    time.sleep(0.5)  # ensure IMU is initialized
-
-    print("Publishing IMU data...")
-
+    # main loop
+    logger.info("Publishing IMU data...")
     while True:
         raw_msg = Imu()
         raw_msg.header.stamp = node.get_clock().now().to_msg()
@@ -58,17 +60,9 @@ def bno08x_node():
         raw_msg.angular_velocity.y = gyro_y
         raw_msg.angular_velocity.z = gyro_z
 
-        # quat_i, quat_j, quat_k, quat_real = bno.quaternion
-        # raw_msg.orientation.w = quat_i
-        # raw_msg.orientation.x = quat_j
-        # raw_msg.orientation.y = quat_k
-        # raw_msg.orientation.z = quat_real
-
         raw_msg.orientation_covariance[0] = -1
         raw_msg.linear_acceleration_covariance[0] = -1
         raw_msg.angular_velocity_covariance[0] = -1
-
-        raw_pub.publish(raw_msg)
 
         mag_msg = MagneticField()
         mag_x, mag_y, mag_z = bno.magnetic
@@ -77,23 +71,12 @@ def bno08x_node():
         mag_msg.magnetic_field.y = mag_y
         mag_msg.magnetic_field.z = mag_z
         mag_msg.magnetic_field_covariance[0] = -1
+        
+        raw_pub.publish(raw_msg)
         mag_pub.publish(mag_msg)
 
-        # status_msg = DiagnosticStatus()
-        # status_msg.level = 0
-        # status_msg.name = "bno08x IMU"
-        # status_msg.message = ""
-        # status_pub.publish(status_msg)
-        # print(raw_msg, mag_msg)
+        rate.sleep()
 
-        sleep(1/400)
-
-    node.get_logger().info('bno08x node finished')
-    node.destroy_node()
-    rclpy.shutdown()
 
 if __name__ == '__main__':
-    try:
-        bno08x_node()
-    except Exception:
-        node.get_logger().info('bno08x node exited with exception')
+    imu_node()

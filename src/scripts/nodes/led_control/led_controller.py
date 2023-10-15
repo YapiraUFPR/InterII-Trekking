@@ -5,74 +5,72 @@
 # Author: Gabriel Pontarolo
 
 import rclpy
-from adafruit_tcs34725 import TCS34725
+import yaml
 import board
-import adafruit_bitbangio as bitbangio
 from digitalio import DigitalInOut 
 from std_msgs.msg import ColorRGBA
-from sys import argv
 from time import time
 
-TCS_ADDR = 0x29
 LED_PIN = board.D13
 
-MARK_COLOR_LOWER = [22, 22, 0]
-MARK_COLOR_UPPER = [30, 30, 5]
-
-SAMPLE_RATE = 400
-LED_DELAY = 0.5
-
 led = None
+mark_color_upper = [255, 255, 255]
+mark_color_lower = [0, 0, 0]
+deactivation_delay = 0.0
+led_countdown = 0
 
-def main():
+def color_callback(msg:ColorRGBA):
+    global led
+    global mark_color_lower
+    global mark_color_upper
+    global deactivation_delay
+    global led_countdown
 
-    rclpy.init(args=argv)
+    color = [msg.r, msg.g, msg.b]
 
-    # node intialization
+    if all(mark_color_lower[i] < color[i] < mark_color_upper[i] for i in range(3)):
+        led.value = True
+        led_countdown = time() + deactivation_delay
+
+    if time() > led_countdown:
+        led.value = False
+
+def led_control():
+
+    # load config
+    with open("/home/user/ws/src/config/config.yaml", "r") as file:
+        config = yaml.safe_load(file)
+    global mark_color_upper
+    global mark_color_lower
+    global deactivation_delay
+    node_name = config["led"]["node"]
+    color_topic = config["color"]["topic"]
+    mark_color_upper = config["led"]["mark_color_upper"]
+    mark_color_lower = config["led"]["mark_color_lower"]
+    deactivation_delay = config["led"]["deactivation_delay"]
+
+    # ros2 initialization
+    rclpy.init()
     global node 
-    node = rclpy.create_node('led_control')
-    color_pub = node.create_publisher(ColorRGBA, 'led_control/color', 10)
-    rate = node.create_rate(100) # frequency in Hz
-    node.get_logger().info('led_control node launched.')
-
-    # sensor initialization
-    i2c = bitbangio.I2C(scl=board.D27, sda=board.D22, frequency=SAMPLE_RATE*1000)
-    tcs = TCS34725(i2c,address=TCS_ADDR) #0x29
-    tcs.integration_time = 150  # time to read the signal, between 2.4 and 614.4 milliseconds
-    tcs.gain = 16 # ampplification factor of the light, 1, 4, 16, 60
-
+    node = rclpy.create_node(node_name)
+    color_sub = node.create_subscription(ColorRGBA, color_topic, color_callback, 10)
+    color_sub # prevent unused variable warning
+    logger = node.get_logger()
+    logger.info('LED node launched.')
+   
     # led initialization
     global led
     led = DigitalInOut(LED_PIN)
     led.switch_to_output(value=False)
 
-    color_msg = ColorRGBA()
+    # main loop
+    logger.info('LED node running...')
+    rclpy.spin(node)
 
-    led_countdown = 0
-    while rclpy.ok():
-
-        r, g, b = tcs.color_rgb_bytes
-        temp = tcs.color_temperature
-        lux = tcs.lux
-        
-        color_msg.r = r
-        color_msg.g = g
-        color_msg.b = b
-
-        color = [r, g, b]
-        print(color, temp, lux)
-
-        if all(MARK_COLOR_LOWER[i] < color[i] < MARK_COLOR_UPPER[i] for i in range(3)):
-            led.value = True
-            led_countdown = time() + LED_DELAY
-
-        if time() > led_countdown:
+if __name__ == "__main__":
+    try: 
+        led_control()
+    except Exception:
+        # turn off led if node crashes
+        if led != None:
             led.value = False
-
-        color_pub.publish(color_msg)
-
-try: 
-    main()
-except Exception:
-    if led != None:
-        led.value = False
