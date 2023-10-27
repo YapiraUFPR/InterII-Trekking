@@ -12,13 +12,12 @@ def camera_callback(msg):
     global image_buffer
     np_arr = np.frombuffer(msg.data, np.uint8)
     image_np = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-    gray = cv2.cvtColor(image_np, cv2.COLOR_BGR2GRAY)
-    image_buffer.append(gray)
+    image_buffer.append(image_np)
 
 def odometry():
     
     # load config
-    with open("/home/gab/projetos/yapira/bedman-trekker/src/config/config.yaml", "r") as file:
+    with open("/home/user/ws/src/config/config.yaml", "r") as file:
         config = yaml.safe_load(file)
     camera_topic = config["sensors"]["camera"]["topic"]
 
@@ -27,15 +26,19 @@ def odometry():
     global node
     node = rclpy.create_node("camera_listener")
     camera_sub = node.create_subscription(CompressedImage, camera_topic, camera_callback, 10)
+    optflow_pub = node.create_publisher(CompressedImage, "/optflow", 10)
+    
     rate = node.create_rate(10) # frequency in Hz
     camera_sub, rate
     logger = node.get_logger()
     logger.info('Camera listener node launched.')
 
-    # get first frame
-    rclpy.spin_once(node)
 
+    # get first frame
     global image_buffer
+    while len(image_buffer) == 0:
+        rclpy.spin_once(node)
+
     first_frame = image_buffer.pop(0)
     vo = MonocularVisualOdometry(first_frame)
 
@@ -44,8 +47,14 @@ def odometry():
 
         if len(image_buffer) > 0:
             curr_frame = image_buffer.pop(0)
-            R, t = vo.estimate(curr_frame)
-            # print(R, t)
+            output = vo.estimate(curr_frame)
+
+            msg = CompressedImage()
+            msg.header.stamp = node.get_clock().now().to_msg()
+            msg.format = "jpeg"
+            msg.data = np.array(cv2.imencode('.jpg', output)[1]).tobytes()
+
+            optflow_pub.publish(msg)
 
 if __name__ == "__main__":
     odometry()

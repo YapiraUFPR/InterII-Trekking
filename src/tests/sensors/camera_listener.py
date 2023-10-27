@@ -16,7 +16,8 @@ def camera_pub():
     # load config
     with open("/home/gab/projetos/yapira/bedman-trekker/src/config/config.yaml", "r") as file:
         config = yaml.safe_load(file)
-    camera_topic = config["sensors"]["camera"]["topic"]
+    # camera_topic = config["sensors"]["camera"]["topic"]
+    camera_topic = "/optflow"
 
     # ros2 initialization
     rclpy.init(args=None)
