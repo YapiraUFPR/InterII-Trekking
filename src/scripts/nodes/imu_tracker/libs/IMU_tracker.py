@@ -210,3 +210,8 @@ class IMUTracker:
     def calculatePosition(self, data):
         a_nav, orix, oriy, oriz = self.attitudeTrack(data)
         return self.positionTrack(a_nav)
+    
+    def reset(self):
+        self._p = np.array([[0, 0, 0]], dtype='float64').T
+        self._prevt = -1
+        self._t = 0

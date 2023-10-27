@@ -1,21 +1,32 @@
-- sensors:
-  - imu:
-    - node: sensors/bno08x
-    - imu_topic: sensors/bno08x/raw
-    - mag_topic: sensors/bno08x/mag
-    - sample_rate: 400
+sensors:
+  imu:
+    node: sensors/bno08x
+    imu_topic: sensors/bno08x/raw
+    mag_topic: sensors/bno08x/mag
+    sample_rate: 400
 
-  - distance:
-    - node: sensors/vl53l0x
-    - topic: sensors/vl53l0x/dist
-    - sample_rate: 400
+  distance:
+    node: sensors/vl53l0x
+    topic: sensors/vl53l0x/dist
+    sample_rate: 400
 
-  - color:
-    - node: sensors/tcs34725
-    - topic: sensors/tcs34725/color
-    - sample_rate: 100
+  color:
+    node: sensors/tcs34725
+    topic: sensors/tcs34725/color
+    sample_rate: 100
 
-- led:
-  - mark_color_upper: [22, 22, 0]
-  - mark_color_lower: [30, 30, 5]
-  - deactivation_delay: 0.5
+  camera:
+    node: picamera
+    topic: sensors/picamera/compressed
+    sample_rate: 10
+    input_stream: 0
+
+led:
+  mark_color_upper: [22, 22, 0]
+  mark_color_lower: [30, 30, 5]
+  deactivation_delay: 0.5
+
+imu_tracker:
+  node: imu_tracker
+  topic: imu_tracker/pose
+  sample_rate: 400

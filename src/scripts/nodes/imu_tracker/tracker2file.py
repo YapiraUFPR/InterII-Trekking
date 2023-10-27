@@ -4,7 +4,6 @@ from sys import argv
 import numpy as np
 
 CALIB_DATA_SIZE = 1000
-FILE_PATH = "/home/gab/projetos/yapira/bedman-trekker/src/nodes/sensors/bno08x/data.txt"
 
 finished_callib = False
 imu_data = []
@@ -12,7 +11,7 @@ mag_data = []
 
 def position_tracker():
 
-    imu_data = open(FILE_PATH, 'r')
+    imu_data = open("/home/vini/Documents/Yapira/Bedman-Trekker/src/nodes/position_tracking/data.txt")
 
     raw_data = []
     for line in imu_data.readlines():
