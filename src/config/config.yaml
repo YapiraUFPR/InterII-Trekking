@@ -24,6 +24,15 @@ sensors:
       width: 640
       height: 480
 
+  battery:
+    node: ina219
+    topic: sensors/ina219/voltage
+    sample_rate: 0.5
+    max_cell_voltage: 4.2
+    min_cell_voltage: 3.8
+    cells: 2
+    capacity: 1800 # mAh
+
 led:
   mark_color_upper: [22, 22, 0]
   mark_color_lower: [30, 30, 5]
