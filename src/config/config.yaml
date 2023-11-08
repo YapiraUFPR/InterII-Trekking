@@ -33,6 +33,13 @@ sensors:
     cells: 2
     capacity: 1800 # mAh
 
+motors:
+  node: drive_control
+  topic: cmd_vel
+  sample_rate: 100
+  esc_pin: 8
+  servo_pin: 10
+
 led:
   mark_color_upper: [22, 22, 0]
   mark_color_lower: [30, 30, 5]

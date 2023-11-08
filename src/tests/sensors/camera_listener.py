@@ -3,6 +3,7 @@ import yaml
 from sensor_msgs.msg import CompressedImage
 import numpy as np
 import cv2
+from sys import argv
 
 def camera_callback(msg):
     global node
@@ -17,7 +18,7 @@ def camera_pub():
     with open("/home/gab/projetos/yapira/bedman-trekker/src/config/config.yaml", "r") as file:
         config = yaml.safe_load(file)
     # camera_topic = config["sensors"]["camera"]["topic"]
-    camera_topic = "/optflow"
+    camera_topic = argv[1]
 
     # ros2 initialization
     rclpy.init(args=None)
