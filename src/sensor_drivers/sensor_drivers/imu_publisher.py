@@ -4,7 +4,7 @@
 
 import rclpy
 import yaml
-from sensor_msgs.msg import MagneticField, Imu
+from custom_messages.msg import Imu9DOF
 import board
 import busio
 from adafruit_bno08x import (
@@ -22,16 +22,14 @@ def main():
     with open("/home/user/ws/src/config/config.yaml", "r") as file:
         config = yaml.safe_load(file)
     node_name = config["imu"]["node"]
-    imu_topic = config["imu"]["imu_topic"]
-    mag_topic = config["imu"]["mag_topic"]
+    topic = config["imu"]["topic"]
     sample_rate = config["imu"]["sample_rate"]
 
     # ros2 initialization
     rclpy.init(args=None)
     global node
     node = rclpy.create_node(node_name)
-    raw_pub = node.create_publisher(Imu, imu_topic, 10)
-    mag_pub = node.create_publisher(MagneticField, mag_topic, 10)
+    imu_pub = node.create_publisher(Imu9DOF, topic, 10)
     rate = node.create_rate(sample_rate)  # frequency in Hz
     logger = node.get_logger()
     logger.info('Imu node launched.')
@@ -39,6 +37,7 @@ def main():
     # sensor initialization 
     i2c = busio.I2C(board.SCL, board.SDA, frequency=sample_rate*1000)
     bno = BNO08X_I2C(i2c, address=0x4b)  # BNO080 (0x4b) BNO085 (0x4a)
+    bno.initialize()
     bno.enable_feature(BNO_REPORT_ACCELEROMETER)
     bno.enable_feature(BNO_REPORT_GYROSCOPE)
     bno.enable_feature(BNO_REPORT_MAGNETOMETER)
@@ -47,7 +46,7 @@ def main():
     # main loop
     logger.info("Publishing IMU data...")
     while True:
-        raw_msg = Imu()
+        raw_msg = Imu9DOF()
         raw_msg.header.stamp = node.get_clock().now().to_msg()
 
         accel_x, accel_y, accel_z = bno.acceleration
@@ -64,16 +63,13 @@ def main():
         raw_msg.linear_acceleration_covariance[0] = -1
         raw_msg.angular_velocity_covariance[0] = -1
 
-        mag_msg = MagneticField()
         mag_x, mag_y, mag_z = bno.magnetic
-        mag_msg.header.stamp = node.get_clock().now().to_msg()
-        mag_msg.magnetic_field.x = mag_x
-        mag_msg.magnetic_field.y = mag_y
-        mag_msg.magnetic_field.z = mag_z
-        mag_msg.magnetic_field_covariance[0] = -1
+        raw_msg.magnetic_field.x = mag_x
+        raw_msg.magnetic_field.y = mag_y
+        raw_msg.magnetic_field.z = mag_z
+        raw_msg.magnetic_field_covariance[0] = -1
         
-        raw_pub.publish(raw_msg)
-        mag_pub.publish(mag_msg)
+        imu_pub.publish(raw_msg)
 
         rate.sleep()
 

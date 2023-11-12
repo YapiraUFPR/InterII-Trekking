@@ -1,8 +1,7 @@
 sensors:
   imu:
     node: bno08x
-    imu_topic: sensors/bno08x/raw
-    mag_topic: sensors/bno08x/mag
+    topic: sensors/bno08x/raw
     sample_rate: 400
 
   distance:

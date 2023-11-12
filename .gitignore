@@ -1,5 +1,13 @@
+# colcon build directoires
+log/
+install/
+build/
+
+# external assets
 Data/
 assets/
+
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
