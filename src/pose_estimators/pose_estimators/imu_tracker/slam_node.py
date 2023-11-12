@@ -3,16 +3,21 @@ import rclpy
 import yaml
 from geometry_msgs.msg import PoseStamped
 from custom_messages.msg import Imu9DOF
+from rclpy.time import Time
 import numpy as np
 
 CALIB_DATA_SIZE = 1000
 
 imu_data = []
+msg_ts = 0
 
 def imu_callback(msg:Imu9DOF):
     global imu_data
-    imu_data = [msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z, 
-                msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z,
+    global msg_ts
+
+    msg_ts = Time.from_msg(msg.header.stamp).nanoseconds
+    imu_data = [msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z,
+                msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z, 
                 msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w]
 
 def main():
@@ -39,6 +44,7 @@ def main():
     tracker = IMUTracker(imu_sample_rate)
     
     global imu_data
+    global msg_ts
     
     # calibrate tracker when IMU is stationary
     node.get_logger().info('Waiting for callibration data. Keep the IMU stationary...')
@@ -62,7 +68,7 @@ def main():
 
         np_data =  np.array(imu_data, dtype=np.float32)
 
-        p = tracker.calculatePosition(np_data)
+        p = tracker.calculatePosition(np_data, msg_ts)
 
         # publish position
         msg = PoseStamped()
@@ -71,6 +77,10 @@ def main():
         msg.pose.position.y = p[1]
         msg.pose.position.z = p[2]
 
+        msg.pose.orientation.x = np_data[6]
+        msg.pose.orientation.y = np_data[7]
+        msg.pose.orientation.z = np_data[8]
+        msg.pose.orientation.w = np_data[9]
 
         pos_pub.publish(msg)
 

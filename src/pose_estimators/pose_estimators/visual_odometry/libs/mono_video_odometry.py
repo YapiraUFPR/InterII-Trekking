@@ -8,7 +8,7 @@ class MonoVideoOdometery(object):
                 focal_length = 718.8560,
                 pp = (607.1928, 185.2157), 
                 lk_params=dict(winSize  = (21,21), criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 0.01)), 
-                detector=cv2.FastFeatureDetector_create(threshold=25, nonmaxSuppression=True)):
+            ):
         '''
         Arguments:
             img_file_path {str} -- File path that leads to image sequences
@@ -24,7 +24,6 @@ class MonoVideoOdometery(object):
             ValueError -- Raised when file either file paths are not correct, or img_file_path is not configured correctly
         '''
 
-        self.detector = detector
         self.lk_params = lk_params
         self.focal = focal_length
         self.pp = pp
@@ -32,10 +31,10 @@ class MonoVideoOdometery(object):
         self.t = np.zeros(shape=(3, 3))
         self.id = 0
         self.n_features = 0
+        
+        self.detector = cv2.FastFeatureDetector_create(threshold=25, nonmaxSuppression=True)
 
-        self.current_frame = first_image
-
-        # self.process_frame()
+        self.prev_frame = first_image
 
 
     def detect(self, img):
@@ -55,82 +54,52 @@ class MonoVideoOdometery(object):
         return np.array([x.pt for x in p0], dtype=np.float32).reshape(-1, 1, 2)
 
 
-    def visual_odometery(self):
+    def visual_odometery(self, frame):
         '''
         Used to perform visual odometery. If features fall out of frame
         such that there are less than 2000 features remaining, a new feature
         detection is triggered. 
         '''
-
-        if self.n_features < 2000:
-            self.p0 = self.detect(self.old_frame)
-
-
-        # Calculate optical flow between frames, st holds status
-        # of points from frame to frame
-        self.p1, st, err = cv2.calcOpticalFlowPyrLK(self.old_frame, self.current_frame, self.p0, None, **self.lk_params)
         
+        try:
+            if self.n_features < 2000:
+                self.p0 = self.detect(self.prev_frame)
 
-        # Save the good points from the optical flow
-        self.good_old = self.p0[st == 1]
-        self.good_new = self.p1[st == 1]
+            # Calculate optical flow between frames, st holds status
+            # of points from frame to frame
+            self.p1, st, err = cv2.calcOpticalFlowPyrLK(self.prev_frame, frame, self.p0, None, **self.lk_params)
 
-        E, _ = cv2.findEssentialMat(self.good_new, self.good_old, self.focal, self.pp, cv2.RANSAC, 0.999, 1.0, None)
-        _, R, t, _ = cv2.recoverPose(E, self.good_old, self.good_new, focal=self.focal, pp=self.pp, mask=None)
-        # If the frame is one of first two, we need to initalize
-        # our t and R vectors so behavior is different
-        if self.id < 2:
-            self.R = R
-            self.t = t
-        else:
-            # absolute_scale = self.get_absolute_scale()
-            absolute_scale = 1
-            if (absolute_scale > 0.1 and abs(t[2][0]) > abs(t[0][0]) and abs(t[2][0]) > abs(t[1][0])):
-                self.t = self.t + absolute_scale*self.R.dot(t)
-                self.R = R.dot(self.R)
+            # Save the good points from the optical flow
+            self.good_old = self.p0[st == 1]
+            self.good_new = self.p1[st == 1]
 
+            E, _ = cv2.findEssentialMat(self.good_new, self.good_old, self.focal, self.pp, cv2.RANSAC, 0.999, 1.0, None)
+            _, R, t, _ = cv2.recoverPose(E, self.good_old, self.good_new, focal=self.focal, pp=self.pp, mask=None)
+            # If the frame is one of first two, we need to initalize
+            # our t and R vectors so behavior is different
+            if self.id < 2:
+                self.R = R
+                self.t = t
+            else:
+                # absolute_scale = self.get_absolute_scale()
+                absolute_scale = 1
+                if (absolute_scale > 0.1 and abs(t[2][0]) > abs(t[0][0]) and abs(t[2][0]) > abs(t[1][0])):
+                    self.t = self.t + absolute_scale*self.R.dot(t)
+                    self.R = R.dot(self.R)
 
-        # # If the frame is one of first two, we need to initalize
-        # # our t and R vectors so behavior is different
-        # if self.id < 2:
-        #     E, _ = cv2.findEssentialMat(self.good_new, self.good_old, self.focal, self.pp, cv2.RANSAC, 0.999, 1.0, None)
-        #     _, self.R, self.t, _ = cv2.recoverPose(E, self.good_old, self.good_new, self.R, self.t, self.focal, self.pp, None)
-        # else:
-        #     E, _ = cv2.findEssentialMat(self.good_new, self.good_old, self.focal, self.pp, cv2.RANSAC, 0.999, 1.0, None)
-        #     _, R, t, _ = cv2.recoverPose(E, self.good_old, self.good_new, self.R.copy(), self.t.copy(), self.focal, self.pp, None)
+            # Save the total number of good features
+            self.n_features = self.good_new.shape[0]
 
-        #     if abs(t[2][0]) > abs(t[0][0]) and abs(t[2][0]) > abs(t[1][0]):
-        #         self.t = self.t + self.R.dot(t)
-        #         self.R = R.dot(self.R)
+            # return homogeneous transformation matrix
+            T = np.eye(4)
+            T[0:3, 0:3] = self.R
+            T[0:3, 3] = self.t.reshape(3)
 
-        # Save the total number of good features
-        self.n_features = self.good_new.shape[0]
+        except Exception:
+            T = None
 
-
-    def get_mono_coordinates(self):
-        # We multiply by the diagonal matrix to fix our vector
-        # onto same coordinate axis as true values
-        diag = np.array([[-1, 0, 0],
-                        [0, -1, 0],
-                        [0, 0, -1]])
-        adj_coord = np.matmul(diag, self.t)
-
-        return adj_coord.flatten()
-
-
-    def get_true_coordinates(self):
-        '''Returns true coordinates of vehicle
-        
-        Returns:
-            np.array -- Array in format [x, y, z]
-        '''
-        return self.true_coord.flatten()
-
-    def process_frame(self, frame):
-        '''Processes images in sequence frame by frame
-        '''
-
-        self.old_frame = self.current_frame
-        self.current_frame = frame
-        self.visual_odometery()
+        self.prev_frame = frame
+        self.p0 = self.good_new.reshape(-1, 1, 2)
         self.id += 1
+
+        return T
