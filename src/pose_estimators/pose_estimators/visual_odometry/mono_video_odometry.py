@@ -5,8 +5,8 @@ import os
 class MonoVideoOdometery(object):
     def __init__(self, 
                 first_image,
-                focal_length = 718.8560,
-                pp = (607.1928, 185.2157), 
+                focal_length = 590.386253,
+                pp = (318.077704, 233.468229), 
                 lk_params=dict(winSize  = (21,21), criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 0.01)), 
             ):
         '''

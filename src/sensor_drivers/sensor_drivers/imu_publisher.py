@@ -21,9 +21,9 @@ def main():
     # load config
     with open("/home/user/ws/src/config/config.yaml", "r") as file:
         config = yaml.safe_load(file)
-    node_name = config["imu"]["node"]
-    topic = config["imu"]["topic"]
-    sample_rate = config["imu"]["sample_rate"]
+    node_name = config["sensors"]["imu"]["node"]
+    topic = config["sensors"]["imu"]["topic"]
+    sample_rate = config["sensors"]["imu"]["sample_rate"]
 
     # ros2 initialization
     rclpy.init(args=None)

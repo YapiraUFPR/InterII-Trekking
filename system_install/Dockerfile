@@ -27,11 +27,49 @@ RUN colcon mixin add default \
 # install ros2 packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-ros-base=0.10.0-1* \
+    ros-humble-geographic-msgs \
+    ros-humble-diagnostic-msgs \
+    ros-humble-angles \
+    ros-humble-rosbag2 \
     && rm -rf /var/lib/apt/lists/*
 
+# install libraries
+RUN apt-get update && apt-get install -y --no-install-recommends \ 
+    build-essential \
+    libboost-system-dev \
+    libboost-thread-dev \
+    libboost-program-options-dev \
+    libboost-test-dev \
+    libboost-filesystem-dev \
+    libglew-dev \
+    libeigen3-dev 
+
+
 # install pip requirements
-RUN apt-get update && apt-get install python3-pip -y
-COPY requirements.txt /requirements.txt
-RUN python3 -m pip install -r /requirements.txt
+RUN apt-get update && apt-get install python3-pip -y \
+    &&  python3 -m pip install \
+        Adafruit_Blinka \
+        adafruit_circuitpython_bitbangio \
+        adafruit_circuitpython_bno08x \
+        adafruit_circuitpython_motor \
+        adafruit_circuitpython_tcs34725 \
+        adafruit_circuitpython_vl53l0x \
+        adafruit_circuitpython_ina219 \
+        numpy \
+        opencv_python \
+        pigpio \
+        gpiozero \
+        pytest \
+        rdp \
+        scipy \
+        setuptools \
+        smbus \
+        RPi.GPIO 
+
+# append setup to .bashrc
+RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /root/.bashrc \
+    && echo "source /home/user/ws/install/local_setup.bash" >> /root/.bashrc \
+    && echo "export ROS_HOSTNAME={$(hostname -I | awk '{print $1}')}" >> /root/.bashrc \
+    && echo "export ROS_MASTER_URI=http://$(hostname -I | awk '{print $1}'):11311" >> /root/.bashrc
 
 RUN bash

@@ -1,6 +1,7 @@
 import rclpy
 import yaml
-from sensor_msgs.msg import CompressedImage
+# from sensor_msgs.msg import CompressedImage
+from sensor_msgs.msg import Image
 import numpy as np
 import cv2
 import time
@@ -20,7 +21,7 @@ def main():
     rclpy.init(args=None)
     global node
     node = rclpy.create_node(node_name)
-    camera_pub = node.create_publisher(CompressedImage, topic, 10)
+    camera_pub = node.create_publisher(Image, topic, 10)
     rate = node.create_rate(sample_rate) # frequency in Hz
     logger = node.get_logger()
     logger.info('Camera node launched.')
@@ -35,10 +36,15 @@ def main():
     logger.info('Publishing frame data...')
     ret, frame = cap.read()
     while ret:
-        msg = CompressedImage()
+        msg = Image()
         msg.header.stamp = node.get_clock().now().to_msg()
-        msg.format = "jpeg"
-        msg.data = np.array(cv2.imencode('.jpg', frame)[1]).tobytes()
+        msg.header.frame_id = "world"
+        msg.height = frame.shape[0]
+        msg.width = frame.shape[1]
+        msg.encoding = "rgb8"
+        msg.is_bigendian = False
+        msg.step = 3 * msg.width
+        msg.data = frame.tobytes()
 
         camera_pub.publish(msg)
 

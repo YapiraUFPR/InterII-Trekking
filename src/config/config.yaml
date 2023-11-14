@@ -52,6 +52,7 @@ imu_tracker:
 visual_odometry:
   node: visual_odometry
   topic: visual_odometry/pose
+  path_topic: visual_odometry/path
   sample_rate: 10
 
 estimator:

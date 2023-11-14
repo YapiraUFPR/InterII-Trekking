@@ -2,9 +2,10 @@ import rclpy
 import yaml
 import numpy as np
 import cv2
-from libs.mono_video_odometry import MonoVideoOdometery
+from .mono_video_odometry import MonoVideoOdometery
 from sensor_msgs.msg import CompressedImage
 from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import Path
 
 image_buffer = []
 
@@ -20,17 +21,18 @@ def main():
     # load config
     with open("/home/user/ws/src/config/config.yaml", "r") as file:
         config = yaml.safe_load(file)
-    node_name = config["vo"]["node"]
-    topic = config["vo"]["topic"]
-    sample_rate = config["vo"]["sample_rate"]
+    node_name = config["visual_odometry"]["node"]
+    topic = config["visual_odometry"]["topic"]
+    path_topic = config["visual_odometry"]["path_topic"]
+    sample_rate = config["visual_odometry"]["sample_rate"]
     camera_topic = config["sensors"]["camera"]["topic"]
-    camera_fps = config["sensors"]["camera"]["fps"]
 
     # ros2 initialization
     rclpy.init(args=None)
     global node
     node = rclpy.create_node(node_name)
     vo_pub = node.create_publisher(PoseStamped, topic, 10)
+    path_pub = node.create_publisher(Path, path_topic, 10)
     camera_sub = node.create_subscription(CompressedImage, camera_topic, camera_callback, 10)
     rate = node.create_rate(sample_rate) # frequency in Hz
     camera_sub, vo_pub, rate
@@ -47,6 +49,7 @@ def main():
     gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
     vo = MonoVideoOdometery(gray)
 
+    vo_path = Path()
     while True:
         rclpy.spin_once(node)
 
@@ -69,17 +72,21 @@ def main():
                 # publish pose message
                 pose_msg = PoseStamped()
                 pose_msg.header.stamp = node.get_clock().now().to_msg()
-
+                pose_msg.header.frame_id = "world"
                 pose_msg.pose.position.x = position[0]
                 pose_msg.pose.position.y = position[1]
                 pose_msg.pose.position.z = position[2]
-
                 pose_msg.pose.orientation.x = x
                 pose_msg.pose.orientation.y = y
                 pose_msg.pose.orientation.z = z
                 pose_msg.pose.orientation.w = w
-
                 vo_pub.publish(pose_msg)
+
+                # publish path message
+                vo_path.header = pose_msg.header
+                vo_path.poses.append(pose_msg)
+                path_pub.publish(vo_path)
+
             else:
                 logger.info("Visual odometry failed. No pose calculated.")
         
