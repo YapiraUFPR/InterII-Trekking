@@ -36,8 +36,8 @@ motors:
   node: drive_control
   topic: cmd_vel
   sample_rate: 100
-  esc_pin: 8
-  servo_pin: 10
+  esc_pin: 14
+  servo_pin: 15
 
 led:
   mark_color_upper: [22, 22, 0]

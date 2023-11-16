@@ -2,6 +2,7 @@ import rclpy
 from geometry_msgs.msg import Twist
 from gpiozero import Servo
 import yaml
+from time  import sleep
 
 taget_speed = 0
 target_angle = 0
@@ -24,7 +25,7 @@ def twist_callback(msg):
     target_angle = angle
 
 
-def motor_controll():
+def main():
 
     # load config
     with open("/home/user/ws/src/config/config.yaml", "r") as file:
@@ -46,8 +47,13 @@ def motor_controll():
     logger.info('Motors node launched.')
 
     # motors init
-    esc = Servo(esc_pin, initial_value=0)
+    esc = Servo(esc_pin, initial_value=-1.0)
     servo_motor = Servo(servo_pin, initial_value=0)
+    sleep(3)
+    esc.value = 0.0
+    sleep(5)
+    logger.info("Esc initialized.") 
+
 
     global taget_speed
     global target_angle
@@ -64,4 +70,4 @@ def motor_controll():
         rclpy.spin_once(node)
 
 if __name__ == "__main__":
-    motor_controll()
+    main()
