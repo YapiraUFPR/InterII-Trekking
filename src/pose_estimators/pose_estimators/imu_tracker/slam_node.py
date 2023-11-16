@@ -1,7 +1,7 @@
 from libs.IMU_tracker import IMUTracker
 import rclpy
 import yaml
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseWithCovarianceStamped
 from custom_messages.msg import Imu9DOF
 from rclpy.time import Time
 import numpy as np
@@ -35,7 +35,7 @@ def main():
     global node
     node = rclpy.create_node(node_name)
     imu_sub = node.create_subscription(Imu9DOF, topic, imu_callback, 10)
-    pos_pub = node.create_publisher(PoseStamped, pos_topic, 10)
+    pos_pub = node.create_publisher(PoseWithCovarianceStamped, pos_topic, 10)
     rate = node.create_rate(sample_rate)  # frequency in Hz
     imu_sub, pos_pub, rate  # prevent unused variable warning
     logger = node.get_logger()
@@ -71,16 +71,22 @@ def main():
         p = tracker.calculatePosition(np_data, msg_ts)
 
         # publish position
-        msg = PoseStamped()
+        msg = PoseWithCovarianceStamped()
         msg.header.stamp = node.get_clock().now().to_msg()
-        msg.pose.position.x = p[0]
-        msg.pose.position.y = p[1]
-        msg.pose.position.z = p[2]
+        msg.pose.pose.position.x = p[0]
+        msg.pose.pose.position.y = p[1]
+        msg.pose.pose.position.z = p[2]
 
-        msg.pose.orientation.x = np_data[6]
-        msg.pose.orientation.y = np_data[7]
-        msg.pose.orientation.z = np_data[8]
-        msg.pose.orientation.w = np_data[9]
+        msg.pose.pose.orientation.x = np_data[6]
+        msg.pose.pose.orientation.y = np_data[7]
+        msg.pose.pose.orientation.z = np_data[8]
+        msg.pose.pose.orientation.w = np_data[9]
+
+        msg.pose.covariance = [0.1, 0, 0, 0, 0, 0,
+                               0, 0.1, 0, 0, 0, 0,
+                               0, 0, 0.1, 0, 0, 0,
+                               0, 0, 0, 0.1, 0, 0,
+                               0, 0, 0, 0, 0.1, 0]
 
         pos_pub.publish(msg)
 

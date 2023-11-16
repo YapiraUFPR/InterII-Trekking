@@ -1,11 +1,10 @@
 import rclpy
 import numpy as np 
-from geometry_msgs.msg import PoseStamped, Twist
+from geometry_msgs.msg import Twist
+from nav2_msgs.msg import Odometry
 from sys import argv
 
-MAP_PATH = "../carlos/map.npy"
-map = np.load(MAP_PATH)
-
+map = None 
 velocity = 0
 PATH_RADIUS = 10
 
@@ -15,7 +14,8 @@ def position_callback(msg):
     global node 
     global map
 
-    x, y, z = msg.pose.position 
+    x = msg.pose.position.x
+    y = msg.pose.position.y 
 
     # predict future position 2 seconds from now
     future_pos = np.array([x, y]) + velocity * 2
@@ -62,24 +62,26 @@ def position_callback(msg):
     # publish to cmd_vel
     twist_msg = Twist()
     twist_msg.linear.x = LINEAR_SPEED / 100
-    twist_msg.angular.z = steering_angle
+    twist_msg.angular.z = steering_angle 
     
     global vel_pub
     vel_pub.publish(twist_msg)
 
 
 def main():
-    rclpy.init(args=argv)
+
+    global map
+    map = np.load(argv[1])
 
     # node initialization
+    rclpy.init()
     global node
-    node = rclpy.create_node('controller')
-    
-    pos_sub = node.create_subscription(PoseStamped, 'position', position_callback, 10)
+    node = rclpy.create_node('steering')
+    pos_sub = node.create_subscription(Odometry, "/odometry/filtered", position_callback, 10)
     global vel_pub
-    vel_pub = node.create_publisher(Twist, 'cmd_vel', 10)
+    vel_pub = node.create_publisher(Twist, '/cmd_vel', 10)
 
-    rate = node.create_rate(100)  # frequency in Hz
+    rate = node.create_rate(50)  # frequency in Hz
     rate, pos_sub, vel_pub
     node.get_logger().info('controller node launched.')
 

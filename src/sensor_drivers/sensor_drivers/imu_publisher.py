@@ -4,13 +4,13 @@
 
 import rclpy
 import yaml
-from custom_messages.msg import Imu9DOF
+from custom_messages.msg import Imu
 import board
 import busio
 from adafruit_bno08x import (
     BNO_REPORT_ACCELEROMETER,
     BNO_REPORT_GYROSCOPE,
-    BNO_REPORT_MAGNETOMETER,
+    # BNO_REPORT_MAGNETOMETER,
     BNO_REPORT_ROTATION_VECTOR,
 )
 from adafruit_bno08x.i2c import BNO08X_I2C
@@ -29,7 +29,7 @@ def main():
     rclpy.init(args=None)
     global node
     node = rclpy.create_node(node_name)
-    imu_pub = node.create_publisher(Imu9DOF, topic, 10)
+    imu_pub = node.create_publisher(Imu, topic, 10)
     rate = node.create_rate(sample_rate)  # frequency in Hz
     logger = node.get_logger()
     logger.info('Imu node launched.')
@@ -40,14 +40,14 @@ def main():
     bno.initialize()
     bno.enable_feature(BNO_REPORT_ACCELEROMETER)
     bno.enable_feature(BNO_REPORT_GYROSCOPE)
-    bno.enable_feature(BNO_REPORT_MAGNETOMETER)
+    # bno.enable_feature(BNO_REPORT_MAGNETOMETER)
     bno.enable_feature(BNO_REPORT_ROTATION_VECTOR)
     sleep(0.5)  # ensure IMU is initialized
 
     # main loop
     logger.info("Publishing IMU data...")
     while True:
-        imu_msg = Imu9DOF()
+        imu_msg = Imu()
         imu_msg.header.stamp = node.get_clock().now().to_msg()
 
         quat_i, quat_j, quat_k, quat_real = bno.quaternion
@@ -69,11 +69,11 @@ def main():
         imu_msg.linear_acceleration.z = accel_z
         imu_msg.linear_acceleration_covariance[0] = -1
 
-        mag_x, mag_y, mag_z = bno.magnetic
-        imu_msg.magnetic_field.x = mag_x
-        imu_msg.magnetic_field.y = mag_y
-        imu_msg.magnetic_field.z = mag_z
-        imu_msg.magnetic_field_covariance[0] = -1
+        # mag_x, mag_y, mag_z = bno.magnetic
+        # imu_msg.magnetic_field.x = mag_x
+        # imu_msg.magnetic_field.y = mag_y
+        # imu_msg.magnetic_field.z = mag_z
+        # imu_msg.magnetic_field_covariance[0] = -1
         
         imu_pub.publish(imu_msg)
 

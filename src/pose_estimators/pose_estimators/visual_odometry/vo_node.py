@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 from .mono_video_odometry import MonoVideoOdometery
 from sensor_msgs.msg import CompressedImage
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Path
 
 image_buffer = []
@@ -31,7 +31,7 @@ def main():
     rclpy.init(args=None)
     global node
     node = rclpy.create_node(node_name)
-    vo_pub = node.create_publisher(PoseStamped, topic, 10)
+    vo_pub = node.create_publisher(PoseWithCovarianceStamped, topic, 10)
     path_pub = node.create_publisher(Path, path_topic, 10)
     camera_sub = node.create_subscription(CompressedImage, camera_topic, camera_callback, 10)
     rate = node.create_rate(sample_rate) # frequency in Hz
@@ -70,16 +70,21 @@ def main():
                 z = (R[1,0] - R[0,1]) / (4*w)
                 
                 # publish pose message
-                pose_msg = PoseStamped()
+                pose_msg = PoseWithCovarianceStamped()
                 pose_msg.header.stamp = node.get_clock().now().to_msg()
                 pose_msg.header.frame_id = "world"
-                pose_msg.pose.position.x = position[0]
-                pose_msg.pose.position.y = position[1]
-                pose_msg.pose.position.z = position[2]
-                pose_msg.pose.orientation.x = x
-                pose_msg.pose.orientation.y = y
-                pose_msg.pose.orientation.z = z
-                pose_msg.pose.orientation.w = w
+                pose_msg.pose.pose.position.x = position[0]
+                pose_msg.pose.pose.position.y = position[1]
+                pose_msg.pose.pose.position.z = position[2]
+                pose_msg.pose.pose.orientation.x = x
+                pose_msg.pose.pose.orientation.y = y
+                pose_msg.pose.pose.orientation.z = z
+                pose_msg.pose.pose.orientation.w = w
+                pose_msg.pose.covariance = [0.1, 0, 0, 0, 0, 0,
+                                            0, 0.1, 0, 0, 0, 0,
+                                            0, 0, 0.1, 0, 0, 0,
+                                            0, 0, 0, 0, 0.1, 0,
+                                            0, 0, 0, 0, 0, 0.1]
                 vo_pub.publish(pose_msg)
 
                 # publish path message
