@@ -11,8 +11,8 @@ def twist_callback(msg):
     global servo_motor
     global esc
 
-    angle = (msg.angular.z * 90) + 90
-    angle = int(max(0, min(angle, 180)))
+    angle = msg.angular.z
+    angle = max(0, min(angle, 1))
 
     speed = msg.linear.x
     speed = max(-1, min(speed, 1))
