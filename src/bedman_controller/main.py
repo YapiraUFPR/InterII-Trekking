@@ -45,6 +45,10 @@ class Controller:
 
     def run(self):
         # get to the first mark
+        self.state = self.CORRECTING
+        self.set_speed(0.2, 0.0)
+        sleep(1.5)
+        
         self.state = self.PID_STATE
         while not self.in_mark:
             self.logger.info("Correcting in mark direction")

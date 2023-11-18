@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            '2d_pid = visual_pid.2d_pid:main',
+            'twod_pid = visual_pid.twod_pid:main',
         ],
     },
 )

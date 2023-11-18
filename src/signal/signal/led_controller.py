@@ -40,6 +40,7 @@ def color_callback(msg:ColorRGBA):
 
     if time() > led_countdown:
         led.value = False
+        mark_pub.publish(Bool(data=False))
 
 def led_control():
 

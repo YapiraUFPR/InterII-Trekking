@@ -42,7 +42,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libboost-test-dev \
     libboost-filesystem-dev \
     libglew-dev \
-    libeigen3-dev 
+    libeigen3-dev \
+    libgeographic-dev
 
 
 # install pip requirements
@@ -55,6 +56,7 @@ RUN apt-get update && apt-get install python3-pip -y \
         adafruit_circuitpython_tcs34725 \
         adafruit_circuitpython_vl53l0x \
         adafruit_circuitpython_ina219 \
+        adafruit_circuitpython_mpu6050 \
         numpy \
         opencv_python \
         pigpio \

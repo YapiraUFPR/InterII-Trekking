@@ -3,6 +3,13 @@ from geometry_msgs.msg import Twist
 from gpiozero import Servo
 import yaml
 from time  import sleep
+import subprocess
+
+# run sudo pigpiod
+try:
+    subprocess.Popen(["sudo", "pigpiod"])
+except Exception:
+    pass 
 
 target_speed = 0.0
 target_angle = 0.0
@@ -12,18 +19,18 @@ def twist_callback(msg):
     global target_speed
     global target_angle
 
-    node.get_logger().info(f"Received twist msg {msg}")
+    logger = node.get_logger()
 
     speed = msg.linear.x
-    speed = max(-1, min(speed, 1))
-
     angle = msg.angular.z
-    angle = max(-1, min(angle, 1))
+    logger.info(f"Received twist msg with {speed} and {angle}")
 
-    print(f"speed: {speed}, angle: {angle}")
+    speed = max(-1, min(speed, 1))
+    angle = max(-1, min(angle, 1))
 
     target_speed = speed
     target_angle = angle
+    logger.info(f"Speed: {speed}, angle: {angle}")
 
 
 def main():
@@ -65,16 +72,17 @@ def main():
         while True:
             speed_diff = target_speed - speed
             if speed_diff != 0.0:
-                speed_inc = 0.01 if speed_diff > 0 else -0.01
+                speed_inc = 0.01 if speed_diff > 0.0 else -0.01
                 speed = esc.value + speed_inc
                 esc.value = max(-1, min(speed, 1))
 
             ang_diff = target_angle - angle
             if ang_diff != 0.0:
-                angle_inc = 0.01 if ang_diff > 90 else -0.01
+                angle_inc = 0.01 if ang_diff > 0.0 else -0.01
                 angle = servo_motor.value + angle_inc
                 servo_motor.value = max(-1, min(angle, 1))
 
+            logger.info(f"Current speed: {speed}, {angle}")
             rclpy.spin_once(node)
 
     except KeyboardInterrupt:
