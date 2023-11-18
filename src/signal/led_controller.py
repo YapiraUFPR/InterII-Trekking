@@ -11,7 +11,7 @@ from digitalio import DigitalInOut
 from std_msgs.msg import ColorRGBA
 from time import time
 
-LED_PIN = board.D13
+LED_PIN = board.D10
 
 led = None
 mark_color_upper = [255, 255, 255]
@@ -25,10 +25,13 @@ def color_callback(msg:ColorRGBA):
     global mark_color_upper
     global deactivation_delay
     global led_countdown
+    global node 
 
     color = [msg.r, msg.g, msg.b]
+    node.get_logger().info(f"Color detected: {color}")
 
     if all(mark_color_lower[i] < color[i] < mark_color_upper[i] for i in range(3)):
+        node.get_logger().info("Mark detected!")
         led.value = True
         led_countdown = time() + deactivation_delay
 
@@ -44,7 +47,7 @@ def led_control():
     global mark_color_lower
     global deactivation_delay
     node_name = config["led"]["node"]
-    color_topic = config["color"]["topic"]
+    color_topic = config["sensors"]["color"]["topic"]
     mark_color_upper = config["led"]["mark_color_upper"]
     mark_color_lower = config["led"]["mark_color_lower"]
     deactivation_delay = config["led"]["deactivation_delay"]
@@ -70,7 +73,8 @@ def led_control():
 if __name__ == "__main__":
     try: 
         led_control()
-    except Exception:
+    except Exception as e:
+        print(e)
         # turn off led if node crashes
         if led != None:
             led.value = False

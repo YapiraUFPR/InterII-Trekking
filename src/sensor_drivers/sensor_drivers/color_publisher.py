@@ -4,15 +4,17 @@ from std_msgs.msg import ColorRGBA
 import board
 from adafruit_tcs34725 import TCS34725
 import adafruit_bitbangio as bitbangio
+# import busio
+from time import sleep
 
 def main():
     
     # load config
     with open("/home/user/ws/src/config/config.yaml", "r") as file:
         config = yaml.safe_load(file)
-    node_name = config["color"]["node"]
-    topic = config["color"]["topic"]
-    sample_rate = config["color"]["sample_rate"]
+    node_name = config["sensors"]["color"]["node"]
+    topic = config["sensors"]["color"]["topic"]
+    sample_rate = config["sensors"]["color"]["sample_rate"]
 
     # ros2 initialization
     rclpy.init(args=None)
@@ -26,17 +28,31 @@ def main():
     # sensor initialization, uses secondary i2c bus to avoid conflicts with distance sensor
     i2c = bitbangio.I2C(scl=board.D27, sda=board.D22, frequency=sample_rate*1000)
     tcs = TCS34725(i2c, address=0x29)
+    tcs.gain = 16
+    tcs.integration_time = 200
 
     # main loop
     logger.info('Publishing color data...')
     while True:
-        msg = ColorRGBA()
-        msg.r, msg.g, msg.b = tcs.color_rgb_bytes
-        msg.a = 1.0
+        
+        try:
+            color_bytes = tcs.color_rgb_bytes
+            print(color_bytes)
+            msg = ColorRGBA()
+            msg.r = float(color_bytes[0])
+            msg.g = float(color_bytes[1])
+            msg.b = float(color_bytes[2])
+            msg.a = 1.0
 
-        color_pub.publish(msg)
+            color_pub.publish(msg)
 
-        rate.sleep()
+            print(msg)        
+        except Exception:
+            logger.warning("Color sensor error, reseting...")
+            tcs = TCS34725(i2c, address=0x29)
+            sleep(3)
+
+        sleep(1/sample_rate)
 
 
 if __name__ == "__main__":

@@ -55,7 +55,7 @@ WAFFLE_MAX_LIN_VEL = 0.26
 WAFFLE_MAX_ANG_VEL = 1.82
 
 LIN_VEL_STEP_SIZE = 0.01
-ANG_VEL_STEP_SIZE = 0.1
+ANG_VEL_STEP_SIZE = 0.01
 
 
 msg = """
@@ -172,23 +172,23 @@ def main():
 
             twist = Twist()
 
-            control_linear_velocity = make_simple_profile(
-                control_linear_velocity,
-                target_linear_velocity,
-                (LIN_VEL_STEP_SIZE / 2.0))
+            # control_linear_velocity = make_simple_profile(
+            #     control_linear_velocity,
+            #     target_linear_velocity,
+            #     (LIN_VEL_STEP_SIZE / 2.0))
 
-            twist.linear.x = control_linear_velocity
+            twist.linear.x = target_linear_velocity
             twist.linear.y = 0.0
             twist.linear.z = 0.0
 
-            control_angular_velocity = make_simple_profile(
-                control_angular_velocity,
-                target_angular_velocity,
-                (ANG_VEL_STEP_SIZE / 2.0))
+            # control_angular_velocity = make_simple_profile(
+            #     control_angular_velocity,
+            #     target_angular_velocity,
+            #     (ANG_VEL_STEP_SIZE / 2.0))
 
             twist.angular.x = 0.0
             twist.angular.y = 0.0
-            twist.angular.z = control_angular_velocity
+            twist.angular.z = target_angular_velocity
 
             pub.publish(twist)
 

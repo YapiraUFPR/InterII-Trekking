@@ -42,7 +42,7 @@ def main():
 
         camera_pub.publish(msg)
 
-        time.sleep(1/90)
+        time.sleep(1/sample_rate)
 
         ret, frame = cap.read()
 

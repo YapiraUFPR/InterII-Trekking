@@ -40,8 +40,9 @@ motors:
   servo_pin: 15
 
 led:
-  mark_color_upper: [22, 22, 0]
-  mark_color_lower: [30, 30, 5]
+  node: signal_led
+  mark_color_upper: [255, 40, 255]
+  mark_color_lower: [0, 29, 0]
   deactivation_delay: 0.5
 
 imu_tracker:
@@ -65,3 +66,12 @@ mapper:
   topic: mapper/map
   sample_rate: 100
   seg_pts_num: 100
+
+cone_detector:
+  node: cone_detector
+  topic: cone_detector/cones_pos
+  show_topic: cone_detector/debug_image
+  sample_rate: 10
+  lower_color: [130, 0, 0]
+  upper_color: [230, 255, 255]
+  area_threshold: 1000

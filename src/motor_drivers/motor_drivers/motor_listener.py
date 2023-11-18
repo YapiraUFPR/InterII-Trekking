@@ -4,24 +4,25 @@ from gpiozero import Servo
 import yaml
 from time  import sleep
 
-taget_speed = 0
-target_angle = 0
+target_speed = 0.0
+target_angle = 0.0
 
 def twist_callback(msg):
-    global servo_motor
-    global esc
+    global node
+    global target_speed
+    global target_angle
 
-    angle = msg.angular.z
-    angle = max(0, min(angle, 1))
+    node.get_logger().info(f"Received twist msg {msg}")
 
     speed = msg.linear.x
     speed = max(-1, min(speed, 1))
 
-    print(speed, angle)
+    angle = msg.angular.z
+    angle = max(-1, min(angle, 1))
 
-    global taget_speed
-    global target_angle
-    taget_speed = speed
+    print(f"speed: {speed}, angle: {angle}")
+
+    target_speed = speed
     target_angle = angle
 
 
@@ -33,7 +34,7 @@ def main():
     node_name = config["motors"]["node"]
     topic = config["motors"]["topic"]
     sample_rate = config["motors"]["sample_rate"]
-    esc_pin = config["motors"]["escpin"]
+    esc_pin = config["motors"]["esc_pin"]
     servo_pin = config["motors"]["servo_pin"]
 
     # node init
@@ -47,7 +48,7 @@ def main():
     logger.info('Motors node launched.')
 
     # motors init
-    esc = Servo(esc_pin, initial_value=-1.0)
+    esc = Servo(esc_pin, initial_value=0.0)
     servo_motor = Servo(servo_pin, initial_value=0)
     sleep(3)
     esc.value = 0.0
@@ -55,19 +56,32 @@ def main():
     logger.info("Esc initialized.") 
 
 
-    global taget_speed
+    global target_speed
     global target_angle
 
-    while True:
-        speed_inc = 0.01 if taget_speed > 0 else -0.01
-        speed = esc.value + speed_inc
-        esc.value = max(-1, min(speed, 1))
+    speed = 0.0
+    angle = 0.0
+    try:
+        while True:
+            speed_diff = target_speed - speed
+            if speed_diff != 0.0:
+                speed_inc = 0.01 if speed_diff > 0 else -0.01
+                speed = esc.value + speed_inc
+                esc.value = max(-1, min(speed, 1))
 
-        angle_inc = 0.01 if target_angle > 90 else -0.01
-        angle = servo_motor.value + angle_inc
-        servo_motor.value = max(-1, min(angle, 1))
+            ang_diff = target_angle - angle
+            if ang_diff != 0.0:
+                angle_inc = 0.01 if ang_diff > 90 else -0.01
+                angle = servo_motor.value + angle_inc
+                servo_motor.value = max(-1, min(angle, 1))
 
-        rclpy.spin_once(node)
+            rclpy.spin_once(node)
+
+    except KeyboardInterrupt:
+        esc.value = 0.0
+        servo_motor.value = 0.0
+        logger.info("Motors stopped.") 
+        return
 
 if __name__ == "__main__":
     main()

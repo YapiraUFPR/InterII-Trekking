@@ -77,8 +77,7 @@ def main():
         
         imu_pub.publish(imu_msg)
 
-        rate.sleep()
-
+        sleep(1/sample_rate)
 
 if __name__ == '__main__':
     main()
