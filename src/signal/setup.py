@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'visual_pid'
+package_name = 'signal'
 
 setup(
     name=package_name,
@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            '2d_pid = visual_pid.2d_pid:main',
+            'led_controller = signal.led_controller:main',
         ],
     },
 )

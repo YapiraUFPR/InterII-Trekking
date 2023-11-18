@@ -67,7 +67,7 @@ mapper:
   sample_rate: 100
   seg_pts_num: 100
 
-cone_detector:
+2d_pid:
   node: cone_detector
   topic: cone_detector/cones_pos
   show_topic: cone_detector/debug_image
@@ -75,3 +75,7 @@ cone_detector:
   lower_color: [130, 0, 0]
   upper_color: [230, 255, 255]
   area_threshold: 1000
+  pid:
+    kp: 0.5
+    kd: 0.0
+    ki: 0.0
