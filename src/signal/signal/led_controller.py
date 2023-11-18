@@ -9,6 +9,7 @@ import yaml
 import board
 from digitalio import DigitalInOut 
 from std_msgs.msg import ColorRGBA
+from std_msgs.msg import Bool
 from time import time
 
 LED_PIN = board.D10
@@ -26,6 +27,7 @@ def color_callback(msg:ColorRGBA):
     global deactivation_delay
     global led_countdown
     global node 
+    global mark_pub
 
     color = [msg.r, msg.g, msg.b]
     node.get_logger().info(f"Color detected: {color}")
@@ -34,6 +36,7 @@ def color_callback(msg:ColorRGBA):
         node.get_logger().info("Mark detected!")
         led.value = True
         led_countdown = time() + deactivation_delay
+        mark_pub.publish(Bool(data=True))
 
     if time() > led_countdown:
         led.value = False
@@ -48,6 +51,7 @@ def led_control():
     global deactivation_delay
     node_name = config["led"]["node"]
     color_topic = config["sensors"]["color"]["topic"]
+    topic = config["led"]["topic"]
     mark_color_upper = config["led"]["mark_color_upper"]
     mark_color_lower = config["led"]["mark_color_lower"]
     deactivation_delay = config["led"]["deactivation_delay"]
@@ -57,6 +61,8 @@ def led_control():
     global node 
     node = rclpy.create_node(node_name)
     color_sub = node.create_subscription(ColorRGBA, color_topic, color_callback, 10)
+    global mark_pub
+    mark_pub = node.create_publisher(Bool, topic, 10)
     color_sub # prevent unused variable warning
     logger = node.get_logger()
     logger.info('LED node launched.')

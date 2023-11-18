@@ -41,6 +41,7 @@ motors:
 
 led:
   node: signal_led
+  topic: mark
   mark_color_upper: [255, 40, 255]
   mark_color_lower: [0, 29, 0]
   deactivation_delay: 0.5
