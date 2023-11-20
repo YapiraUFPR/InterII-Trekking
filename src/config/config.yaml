@@ -42,8 +42,8 @@ motors:
 led:
   node: signal_led
   topic: mark
-  mark_color_upper: [255, 255, 255]
-  mark_color_lower: [0, 0, 0]
+  mark_color_upper: [100, 100, 100] # 69 69 62
+  mark_color_lower: [10, 30, 10]
   deactivation_delay: 0.5
 
 imu_tracker:
@@ -73,10 +73,10 @@ twod_pid:
   topic: twod_pid/cmd_vel
   show_topic: twod_pid/debug_image
   sample_rate: 20
-  lower_color: [20, 0, 0]
-  upper_color: [45, 255, 255]
+  lower_color: [15, 0, 0] 
+  upper_color: [25, 255, 255]
   area_threshold: 100
   pid:
-    kp: 0.5
+    kp: 0.2
     kd: 0.0
     ki: 0.0

@@ -4,22 +4,9 @@ from geometry_msgs.msg import Twist
 import cv2 
 import numpy as np
 import yaml
+from .pid import PID
 
 image_buffer = []
-
-class PID:
-    def __init__(self, kp, kd, ki):
-        self.kp = kp
-        self.kd = kd
-        self.ki = ki
-        self.last_error = 0
-        self.integral = 0
-
-    def update(self, error):
-        self.integral += error
-        derivative = error - self.last_error
-        self.last_error = error
-        return self.kp*error + self.kd*derivative + self.ki*self.integral
 
 def image_callback(msg):
     global image_buffer
@@ -36,17 +23,17 @@ def main():
     # load config
     with open("/home/user/ws/src/config/config.yaml", "r") as file:
         config = yaml.safe_load(file)
-    node_name = config["2d_pid"]["node"]
-    topic = config["2d_pid"]["topic"]
-    show_topic = config["2d_pid"]["show_topic"]
-    sample_rate = config["2d_pid"]["sample_rate"]
+    node_name = config["twod_pid"]["node"]
+    topic = config["twod_pid"]["topic"]
+    show_topic = config["twod_pid"]["show_topic"]
+    sample_rate = config["twod_pid"]["sample_rate"]
     image_topic = config["sensors"]["camera"]["topic"]
-    lower_color = config["2d_pid"]["lower_color"]
-    upper_color = config["2d_pid"]["upper_color"]
-    area_threshold = config["2d_pid"]["area_threshold"]
-    kp = config["2d_pid"]["pid"]["kp"]
-    kd = config["2d_pid"]["pid"]["kd"]
-    ki = config["2d_pid"]["pid"]["ki"]
+    lower_color = config["twod_pid"]["lower_color"]
+    upper_color = config["twod_pid"]["upper_color"]
+    area_threshold = config["twod_pid"]["area_threshold"]
+    kp = config["twod_pid"]["pid"]["kp"]
+    kd = config["twod_pid"]["pid"]["kd"]
+    ki = config["twod_pid"]["pid"]["ki"]
     lower_color = np.array(lower_color)
     upper_color = np.array(upper_color)
 
@@ -62,7 +49,7 @@ def main():
     rate, image_listener, twist_publisher
     logger.info('Cone detector node launched.')
 
-    pid = PID(kp, kd, ki)
+    pid = PID(kp, kd, ki, setpoint=0.0, output_limits=(-1.0, 1.0), sample_time=1.0/sample_rate, proportional_on_measurement=True, auto_mode=True)
 
     while True:
 
@@ -97,7 +84,7 @@ def main():
                     bb_image = hsv_image.copy()
                     cv2.rectangle(bb_image, (x, y), (x+w, y+h), (0, 255, 0), 2)      
                     cv2.circle(bb_image, (cx, cy), 5, (0, 0, 255), -1)
-                    show_img = np.hstack((cv2.cvtColor(mask, cv2.COLOR_GRAY2HSV), bb_image))
+                    show_img = np.hstack((cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR), cv2.cvtColor(bb_image, cv2.COLOR_HSV2BGR)))
 
                     show_msg = CompressedImage()
                     show_msg.format = "jpeg"
@@ -109,14 +96,14 @@ def main():
                     error = cx - img_cx
 
                     # calculate pid
-                    correction = pid.update(error)
-                    angle = 0.0 - correction
-                    logger.info(f"Error: {error}, Correction: {correction}, Angle: {angle}")
+                    correction = pid(error)
+
+                    logger.info(f"Error: {error}, Correction: {correction}")
 
                     # convert to angular velocity in z
                     twist = Twist()
                     twist.linear.x = 0.2
-                    twist.angular.z = angle
+                    twist.angular.z = correction
                     twist_publisher.publish(twist)   
 
         rclpy.spin_once(node)   

@@ -42,7 +42,7 @@ def color_callback(msg:ColorRGBA):
         led.value = False
         mark_pub.publish(Bool(data=False))
 
-def led_control():
+def main():
 
     # load config
     with open("/home/user/ws/src/config/config.yaml", "r") as file:
@@ -79,7 +79,7 @@ def led_control():
 
 if __name__ == "__main__":
     try: 
-        led_control()
+        main()
     except Exception as e:
         print(e)
         # turn off led if node crashes

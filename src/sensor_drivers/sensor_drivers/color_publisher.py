@@ -37,7 +37,6 @@ def main():
         
         try:
             color_bytes = tcs.color_rgb_bytes
-            print(color_bytes)
             msg = ColorRGBA()
             msg.r = float(color_bytes[0])
             msg.g = float(color_bytes[1])
@@ -46,7 +45,7 @@ def main():
 
             color_pub.publish(msg)
 
-            print(msg)        
+            # print(msg)        
         except Exception:
             logger.warning("Color sensor error, reseting...")
             tcs = TCS34725(i2c, address=0x29)

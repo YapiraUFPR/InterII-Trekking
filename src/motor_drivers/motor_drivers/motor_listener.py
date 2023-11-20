@@ -70,17 +70,20 @@ def main():
     angle = 0.0
     try:
         while True:
-            speed_diff = target_speed - speed
-            if speed_diff != 0.0:
-                speed_inc = 0.01 if speed_diff > 0.0 else -0.01
-                speed = esc.value + speed_inc
-                esc.value = max(-1, min(speed, 1))
+            # speed_diff = target_speed - speed
+            # if speed_diff != 0.0:
+            #     speed_inc = 0.01 if speed_diff > 0.0 else -0.05
+            #     speed = esc.value + speed_inc
+            #     esc.value = max(-1, min(speed, 1))
 
-            ang_diff = target_angle - angle
-            if ang_diff != 0.0:
-                angle_inc = 0.01 if ang_diff > 0.0 else -0.01
-                angle = servo_motor.value + angle_inc
-                servo_motor.value = max(-1, min(angle, 1))
+            # ang_diff = target_angle - angle
+            # if ang_diff != 0.0:
+            #     angle_inc = 0.01 if ang_diff > 0.0 else -0.05
+            #     angle = servo_motor.value + angle_inc
+            #     servo_motor.value = max(-1, min(angle, 1))
+
+            esc.value = target_speed
+            servo_motor.value = target_angle
 
             logger.info(f"Current speed: {speed}, {angle}")
             rclpy.spin_once(node)
