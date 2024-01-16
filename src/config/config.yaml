@@ -68,15 +68,11 @@ mapper:
   sample_rate: 100
   seg_pts_num: 100
 
-twod_pid:
-  node: twod_pid
-  topic: twod_pid/cmd_vel
-  show_topic: twod_pid/debug_image
+visual_pid:
+  node: visual_pid
+  topic: visual_pid/cmd_vel
+  show_topic: visual_pid/debug_image
   sample_rate: 20
-  lower_color: [15, 0, 0] 
-  upper_color: [25, 255, 255]
-  area_threshold: 100
-  pid:
-    kp: 0.2
-    kd: 0.0
-    ki: 0.0
+  correction: 5 # degrees
+  confidence_threshold: 0.6
+  error_threshold: 10 # pixels
