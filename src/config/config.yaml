@@ -15,9 +15,9 @@ sensors:
     sample_rate: 100
 
   camera:
-    node: picamera
-    topic: sensors/picamera/compressed
-    sample_rate: 10 # is also framerate
+    node: imx
+    topic: sensors/imx/compressed
+    sample_rate: 30 # is also framerate
     input_stream: 0
     resolution:
       width: 640

@@ -84,7 +84,7 @@ def main():
 
                 # publish twist message
                 twist = Twist()
-                twist.linear.x = 0.0
+                twist.linear.x = 0.2
                 twist.angular.z = angular_correction
                 twist_publisher.publish(twist)   
 
