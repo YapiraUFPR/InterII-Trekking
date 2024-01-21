@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'signal'
+package_name = 'mark_signal'
 
 setup(
     name=package_name,
@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'led_controller = signal.led_controller:main',
+            'led_controller = mark_signal.led_controller:main',
         ],
     },
 )
