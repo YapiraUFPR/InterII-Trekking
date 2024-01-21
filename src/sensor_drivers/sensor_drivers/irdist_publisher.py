@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import rclpy
 import yaml
 from sensor_msgs.msg import Range
@@ -26,8 +27,19 @@ def main():
     logger.info('Distance sensor node launched.')
 
     # sensor initialization
-    i2c = bitbangio.I2C(scl=board.D27, sda=board.D22, frequency=sample_rate*1000)
-    vl5 = VL53L0X(i2c, address=0x29)
+    vl5 = None
+    timeout = 5
+    while vl5 is None:
+        logger.info('Initializing sensor TCS347...')
+        try:
+            i2c = bitbangio.I2C(scl=board.D27, sda=board.D22, frequency=sample_rate*1000)
+            vl5 = VL53L0X(i2c, address=0x29)
+        except Exception as e:
+            vl5 = None
+            logger.error(f"Failed to initialize TCS347: {e}")
+            logger.error(f"Retrying in {timeout} seconds...")
+            sleep(timeout)
+            timeout *= 2
 
     # main loop
     logger.info('Publishing distance data...')

@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
 import rclpy
 import yaml
 from sensor_msgs.msg import BatteryState
 from sys import argv
+from time import sleep
 from adafruit_ina219 import INA219
 import adafruit_bitbangio as bitbangio
 import board
@@ -32,13 +34,25 @@ def main():
     logger.info('Battery sensor node launched.')
 
     # sensor initialization
-    i2c = bitbangio.I2C(scl=board.D5, sda=board.D6, frequency=sample_rate*1000)
-    ina219 = INA219(i2c)
-    ina219.set_calibration_16V_5A()
+    ina219 = None
+    timeout = 5
+    while ina219 is None:
+        logger.info('Initializing sensor INA219...')
+
+        try:
+            i2c = bitbangio.I2C(scl=board.D5, sda=board.D6, frequency=sample_rate*1000)
+            ina219 = INA219(i2c)
+            ina219.set_calibration_16V_5A()
+        except Exception as e:
+            ina219 = None
+            logger.error(f"Failed to initialize INA219: {e}")
+            logger.error(f"Retrying in {timeout} seconds...")
+            sleep(timeout)
+            timeout *= 2
 
     # main loop
     logger.info('Publishing battery data...')
-    while True:
+    while rclpy.ok():
         msg = BatteryState()
         msg.header.stamp = node.get_clock().now().to_msg()
 
@@ -63,7 +77,7 @@ def main():
 
         pub.publish(msg)
 
-        rate.sleep()
+        sleep(1/sample_rate)
 
 if __name__ == "__main__":
     main()

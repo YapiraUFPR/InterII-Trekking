@@ -9,7 +9,8 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
-        ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name, ['package.xml']),        
+        ('share/' + package_name, ['launch/drivers.launch']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -22,7 +23,7 @@ setup(
         'console_scripts': [
             'camera_publisher = sensor_drivers.camera_publisher:main',
             'color_publisher = sensor_drivers.color_publisher:main',
-            'imu_publisher = sensor_drivers.mpu_publisher:main',
+            'imu_publisher = sensor_drivers.bno_publisher:main',
             'irdist_publisher = sensor_drivers.irdist_publisher:main',
             'battery_publisher = sensor_drivers.battery_publisher:main',
         ],

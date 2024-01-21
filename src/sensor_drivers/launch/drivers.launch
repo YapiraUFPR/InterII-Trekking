@@ -1,0 +1,7 @@
+<launch>
+    <node pkg="sensor_drivers" exec="camera_publisher" name="camera_publisher"/>
+    <node pkg="sensor_drivers" exec="color_publisher" name="color_publisher"/>
+    <node pkg="sensor_drivers" exec="imu_publisher" name="imu_publisher"/>
+    <node pkg="sensor_drivers" exec="irdist_publisher" name="irdist_publisher"/>
+    <node pkg="sensor_drivers" exec="battery_publisher" name="battery_publisher"/>
+</launch>

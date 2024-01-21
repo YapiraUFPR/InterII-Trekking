@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import rclpy
 import yaml
 from std_msgs.msg import ColorRGBA
@@ -26,14 +27,25 @@ def main():
     logger.info('Color node launched.')
 
     # sensor initialization, uses secondary i2c bus to avoid conflicts with distance sensor
-    i2c = bitbangio.I2C(scl=board.D27, sda=board.D22, frequency=sample_rate*1000)
-    tcs = TCS34725(i2c, address=0x29)
-    tcs.gain = 16
-    tcs.integration_time = 200
+    tcs = None
+    while tcs is None:
+        logger.info('Initializing sensor TCS347...')
+        try:
+            i2c = bitbangio.I2C(scl=board.D27, sda=board.D22, frequency=sample_rate*1000)
+            tcs = TCS34725(i2c, address=0x29)
+            tcs.gain = 16
+            tcs.integration_time = 200
+        except Exception as e:
+            tcs = None
+            timeout *= 2
+            logger.error(f"Failed to initialize TCS347: {e}")
+            logger.error(f"Retrying in {timeout} seconds...")
+            sleep(timeout)
+            timeout = 5
 
     # main loop
     logger.info('Publishing color data...')
-    while True:
+    while rclpy.ok():
         
         try:
             color_bytes = tcs.color_rgb_bytes
@@ -45,7 +57,6 @@ def main():
 
             color_pub.publish(msg)
 
-            # print(msg)        
         except Exception:
             logger.warning("Color sensor error, reseting...")
             tcs = TCS34725(i2c, address=0x29)

@@ -28,9 +28,20 @@ def main():
     logger = node.get_logger()
     logger.info('Imu node launched.')
 
-    # sensor initialization 
-    i2c = busio.I2C(board.SCL, board.SDA, frequency=sample_rate*1000)
-    mpu = MPU6050(i2c)
+    # sensor initialization
+    mpu = None
+    timeout = 5
+    while mpu is None:
+        logger.info('Initializing sensor TCS347...')
+        try:
+            i2c = busio.I2C(board.SCL, board.SDA, frequency=sample_rate*1000)
+            mpu = MPU6050(i2c)
+        except Exception as e:
+            mpu = None
+            logger.error(f"Failed to initialize TCS347: {e}")
+            logger.error(f"Retrying in {timeout} seconds...")
+            sleep(timeout)
+            timeout *= 2
     sleep(0.5)  # ensure IMU is initialized
 
     # main loop
@@ -52,8 +63,6 @@ def main():
         imu_msg.linear_acceleration_covariance[0] = -1
 
         imu_pub.publish(imu_msg)
-
-        # print(f"Published IMU data {imu_msg}")
 
         sleep(1/sample_rate)
 
