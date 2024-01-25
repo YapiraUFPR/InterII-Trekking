@@ -1,2 +1,2 @@
-sudo docker start bedman
-sudo docker exec -w /home/user/ws/ -it bedman bash
+docker start bedman
+docker exec -w /home/user/ws/ -it bedman bash
