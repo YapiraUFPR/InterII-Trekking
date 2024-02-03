@@ -6,6 +6,21 @@ ENV ROS_DISTRO eloquent
 ENV ROS_PYTHON_VERSION 3
 
 #########################################
+######## Update python version ##########
+#########################################
+
+RUN apt-get update && apt-get install -y software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa -y \
+    && apt-get install -y python3.8 python3.8-dev python3.8-distutils \
+    && update-alternatives --install /usr/local/bin/python python /usr/bin/python3.8 2 \
+    && update-alternatives --install /usr/local/bin/python python /usr/bin/python2.7 1 \
+    && update-alternatives --set python /usr/bin/python3.8 \
+    && update-alternatives --install /usr/local/bin/python3 python3 /usr/bin/python3.8 2 \
+    && update-alternatives --install /usr/local/bin/python3 python3 /usr/bin/python2.7 1 \
+    && update-alternatives --set python3 /usr/bin/python3.8 \
+    && python3.8 -m pip install --upgrade pip 
+
+#########################################
 ########### ROS2 Installation ###########
 #########################################
 
@@ -17,15 +32,15 @@ RUN apt-get update && apt-get install ros-${ROS_DISTRO}-ros-base -y \
     && rm -rf /var/lib/apt/lists/*
 
 # install bootstrap tools
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    build-essential \
-    git \
-    python3-pip \
-    python3-colcon-common-extensions \
-    python3-colcon-mixin \
-    python3-rosdep \
-    python3-vcstool \
-    && python3 -m pip install -U argcomplete \
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y build-essential git \
+    && python3 -m pip install \
+        colcon-common-extensions \
+        colcon-mixin \
+        rosdep \
+        vcstool \
+        argcomplete \
+        cython \
     && rm -rf /var/lib/apt/lists/*
 
 # bootstrap rosdep
@@ -57,13 +72,13 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y python3-dev python3-numpy libavcodec-dev libavformat-dev libswscale-dev libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev libgtk-3-dev  libpng-dev libjpeg-dev libopenexr-dev libtiff-dev libwebp-dev libeigen3-dev
 
 # install libcudnn
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/arm64/cuda-ubuntu1804.pin \
-    && mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600 \
-    && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/arm64/7fa2af80.pub \
-    && add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/arm64/ /" \
-    && apt-get update && apt-get install libcudnn8 libcudnn8-dev
+# RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/arm64/cuda-ubuntu1804.pin \
+#     && mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600 \
+#     && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/arm64/7fa2af80.pub \
+#     && add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/arm64/ /" \
+#     && apt-get update && apt-get install libcudnn8 libcudnn8-dev
 
-RUN python3 -m pip install opencv-python
+# RUN python3 -m pip install opencv-python
 # # build opencv
 # RUN mkdir /opencv_installation
 # WORKDIR /opencv_installation
@@ -119,6 +134,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # install pip requirements
 RUN apt-get update &&  python3 -m pip install \
+        numpy \
         Adafruit_Blinka \
         adafruit_circuitpython_bitbangio \
         adafruit_circuitpython_bno08x \
@@ -127,7 +143,6 @@ RUN apt-get update &&  python3 -m pip install \
         adafruit_circuitpython_vl53l0x \
         adafruit_circuitpython_ina219 \
         adafruit_circuitpython_mpu6050 \
-        numpy \
         pigpio \
         gpiozero \
         pytest \
@@ -135,13 +150,8 @@ RUN apt-get update &&  python3 -m pip install \
         scipy \
         setuptools \
         smbus \
-        RPi.GPIO 
+        Jetson.GPIO 
 
 # append setup to .bashrc
 RUN echo 'LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/cuda/lib64' >> /root/.bashrc \
     && echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /root/.bashrc \
-    && echo "source /home/user/ws/install/setup.bash" >> /root/.bashrc \
-    && echo "export ROS_HOSTNAME={$(hostname -I | awk '{print $1}')}" >> /root/.bashrc \
-    && echo "export ROS_MASTER_URI=http://$(hostname -I | awk '{print $1}'):11311" >> /root/.bashrc
-
-RUN bash
