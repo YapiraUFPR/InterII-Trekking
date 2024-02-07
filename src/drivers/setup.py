@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'sensor_drivers'
+package_name = 'drivers'
 
 setup(
     name=package_name,
@@ -21,11 +21,11 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'camera_publisher = sensor_drivers.camera_publisher:main',
-            'color_publisher = sensor_drivers.tcs32_publisher:main',
-            'imu_publisher = sensor_drivers.bno_publisher:main',
-            'irdist_publisher = sensor_drivers.irdist_publisher:main',
-            'battery_publisher = sensor_drivers.battery_publisher:main',
+            'camera_publisher = drivers.camera_publisher:main',
+            'color_publisher = drivers.tcs32_publisher:main',
+            'imu_publisher = drivers.bno_publisher:main',
+            'irdist_publisher = drivers.irdist_publisher:main',
+            'battery_publisher = drivers.battery_publisher:main',
         ],
     },
 )
