@@ -6,21 +6,6 @@ ENV ROS_DISTRO eloquent
 ENV ROS_PYTHON_VERSION 3
 
 #########################################
-######## Update python version ##########
-#########################################
-
-RUN apt-get update && apt-get install -y software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa -y \
-    && apt-get install -y python3.8 python3.8-dev python3.8-distutils \
-    && update-alternatives --install /usr/local/bin/python python /usr/bin/python3.8 2 \
-    && update-alternatives --install /usr/local/bin/python python /usr/bin/python2.7 1 \
-    && update-alternatives --set python /usr/bin/python3.8 \
-    && update-alternatives --install /usr/local/bin/python3 python3 /usr/bin/python3.8 2 \
-    && update-alternatives --install /usr/local/bin/python3 python3 /usr/bin/python2.7 1 \
-    && update-alternatives --set python3 /usr/bin/python3.8 \
-    && python3.8 -m pip install --upgrade pip 
-
-#########################################
 ########### ROS2 Installation ###########
 #########################################
 
@@ -132,8 +117,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libeigen3-dev \
     libgeographic-dev
 
-# install pip requirements
-RUN apt-get update &&  python3 -m pip install \
+# install pip 3.7 requirements
+# RUN apt-get update && apt-get install -y software-properties-common \
+#     && add-apt-repository ppa:deadsnakes/ppa -y \
+#     && apt-get install -y python3.7 python3.7-dev python3.7-distutils \
+#     && python3.7 -m pip install --upgrade pip 
+
+RUN apt-get update && python3 -m pip install --upgrade pip \
+    && python3 -m pip install \
         numpy \
         Adafruit_Blinka \
         adafruit_circuitpython_bitbangio \

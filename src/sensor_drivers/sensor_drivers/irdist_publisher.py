@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.7
 import rclpy
 import yaml
 from sensor_msgs.msg import Range
 from sys import argv
-from adafruit_vl53l0x import VL53L0X
-import adafruit_bitbangio as bitbangio
+from .libs.adafruit_vl53l0x import VL53L0X
+from .libs.adafruit_bitbangio import I2C
 import board
 from time import sleep
 
@@ -32,11 +32,11 @@ def main():
     while vl5 is None:
         logger.info('Initializing sensor TCS347...')
         try:
-            i2c = bitbangio.I2C(scl=board.D27, sda=board.D22, frequency=sample_rate*1000)
+            i2c = I2C(scl=board.D27, sda=board.D22, frequency=sample_rate*1000)
             vl5 = VL53L0X(i2c, address=0x29)
         except Exception as e:
             vl5 = None
-            logger.error(f"Failed to initialize TCS347: {e}")
+            logger.error(f"Failed to initialize VL53L0X: {e}")
             logger.error(f"Retrying in {timeout} seconds...")
             sleep(timeout)
             timeout *= 2

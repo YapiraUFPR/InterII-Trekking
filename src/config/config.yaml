@@ -1,4 +1,5 @@
-%YAML:1.0
+%YAML 1.0
+---
 sensors:
   imu:
     node: bno08x
@@ -14,6 +15,10 @@ sensors:
     node: tcs34725
     topic: sensors/tcs34725/color
     sample_rate: 100
+    pins:
+      s2: 23
+      s3: 24
+      signal: 25
 
   camera:
     node: imx

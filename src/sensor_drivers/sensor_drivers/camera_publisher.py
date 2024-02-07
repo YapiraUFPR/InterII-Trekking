@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.6
 import rclpy
 import yaml
 from sensor_msgs.msg import CompressedImage

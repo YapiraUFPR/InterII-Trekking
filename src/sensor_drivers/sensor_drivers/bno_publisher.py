@@ -6,14 +6,14 @@ import rclpy
 import yaml
 from sensor_msgs.msg import Imu
 import board
-import busio
-from adafruit_bno08x import (
+from .libs.busio import I2C
+from .libs.adafruit_bno08x import (
     BNO_REPORT_ACCELEROMETER,
     BNO_REPORT_GYROSCOPE,
     # BNO_REPORT_MAGNETOMETER,
     BNO_REPORT_ROTATION_VECTOR,
 )
-from adafruit_bno08x.i2c import BNO08X_I2C
+from .libs.adafruit_bno08x.i2c import BNO08X_I2C
 from time import sleep
 
 def main():
@@ -40,7 +40,7 @@ def main():
     while bno is None:
         logger.info('Initializing sensor BNO008x...')
         try:
-            i2c = busio.I2C(board.SCL, board.SDA, frequency=sample_rate*1000)
+            i2c = I2C(board.SCL, board.SDA, frequency=sample_rate*1000)
             bno = BNO08X_I2C(i2c, address=0x4b)  # BNO080 (0x4b) BNO085 (0x4a)
             bno.initialize()
             bno.enable_feature(BNO_REPORT_ACCELEROMETER)

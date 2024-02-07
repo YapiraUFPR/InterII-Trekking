@@ -4,8 +4,8 @@ import yaml
 from sensor_msgs.msg import BatteryState
 from sys import argv
 from time import sleep
-from adafruit_ina219 import INA219
-import adafruit_bitbangio as bitbangio
+from .libs.adafruit_ina219 import INA219
+from .libs.adafruit_bitbangio import I2C
 import board
 
 def main():
@@ -13,13 +13,13 @@ def main():
     # load config
     with open("/home/user/ws/src/config/config.yaml", "r") as file:
         config = yaml.safe_load(file)
-    node_name = config["battery"]["node"]
-    topic = config["battery"]["topic"]
-    sample_rate = config["battery"]["sample_rate"]
-    max_cell_voltage = config["battery"]["max_cell_voltage"]
-    min_cell_voltage = config["battery"]["min_cell_voltage"]
-    cells = config["battery"]["cells"]
-    capacity = config["battery"]["capacity"]
+    node_name = config["sensors"]["battery"]["node"]
+    topic = config["sensors"]["battery"]["topic"]
+    sample_rate = config["sensors"]["battery"]["sample_rate"]
+    max_cell_voltage = config["sensors"]["battery"]["max_cell_voltage"]
+    min_cell_voltage = config["sensors"]["battery"]["min_cell_voltage"]
+    cells = config["sensors"]["battery"]["cells"]
+    capacity = config["sensors"]["battery"]["capacity"]
 
     max_voltage = max_cell_voltage * cells
     min_voltage = min_cell_voltage * cells
@@ -40,7 +40,7 @@ def main():
         logger.info('Initializing sensor INA219...')
 
         try:
-            i2c = bitbangio.I2C(scl=board.D5, sda=board.D6, frequency=sample_rate*1000)
+            i2c = I2C(scl=board.D5, sda=board.D6, frequency=sample_rate*1000)
             ina219 = INA219(i2c)
             ina219.set_calibration_16V_5A()
         except Exception as e:
