@@ -28,4 +28,15 @@ def generate_launch_description():
             node_executable='battery_publisher',
             node_name='battery_publisher'
         ),
+
+        # Node(
+        #     package='drivers',
+        #     node_executable='motor_listener',
+        #     node_name='motor_listener'
+        # ),
+        Node(
+            package='drivers',
+            node_executable='led_controller',
+            node_name='led_controller',
+        ),
     ])
