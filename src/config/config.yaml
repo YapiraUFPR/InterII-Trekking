@@ -2,18 +2,17 @@
 ---
 sensors:
   imu:
-    node: bno08x
-    topic: sensors/bno08x/raw
+    topic: /sensors/bno08x/raw
     sample_rate: 400
+    bus: 1
 
   distance:
-    node: vl53l0x
-    topic: sensors/vl53l0x/dist
+    topic: /sensors/vl53l0x/dist
     sample_rate: 400
+    bus: 1
 
   color:
-    node: tcs34725
-    topic: sensors/tcs34725/color
+    topic: /sensors/tcs34725/color
     sample_rate: 100
     pins:
       s2: 23
@@ -21,8 +20,7 @@ sensors:
       signal: 25
 
   camera:
-    node: imx
-    topic: sensors/imx/compressed
+    topic: /sensors/imx/compressed
     sample_rate: 30 # is also framerate
     input_stream: 0
     resolution:
@@ -30,54 +28,60 @@ sensors:
       height: 480
 
   battery:
-    node: ina219
-    topic: sensors/ina219/voltage
     sample_rate: 0.5
-    max_cell_voltage: 4.2
-    min_cell_voltage: 3.8
-    cells: 2
-    capacity: 1800 # mAh
+    sensors:
+      - topic: /sensors/ina219_0/state # sensors battery
+        max_cell_voltage: 4.2
+        min_cell_voltage: 3.8
+        cells: 2
+        capacity: 1800 # mAh
+        bus: 1
 
-motors:
-  node: drive_control
-  topic: cmd_vel
-  sample_rate: 100
-  esc_pin: 14
-  servo_pin: 15
+      - topic: /sensors/ina219_1/state # motors battery
+        max_cell_voltage: 4.2
+        min_cell_voltage: 3.8
+        cells: 3
+        capacity: 2300 # mAh
+        bus: 0
 
-led:
-  node: signal_led
-  topic: mark
-  mark_color_upper: [100, 100, 100] # 69 69 62
-  mark_color_lower: [10, 30, 10]
-  deactivation_delay: 0.5
+actuators:
+  motors:
+    topic: /cmd_vel
+    sample_rate: 100
+    esc_pin: 14
+    servo_pin: 15
 
-imu_tracker:
-  node: imu_tracker
-  topic: imu_tracker/pose
-  sample_rate: 400
+  flare: # led tape
+    topic: /flare
+    pin: 18
+
+  led: # onboard signal leds
+    - topic: /led_0
+      pin: 17
+    - topic: /led_1
+      pin: 27
 
 visual_odometry:
   node: visual_odometry
-  topic: visual_odometry/pose
-  path_topic: visual_odometry/path
+  topic: /visual_odometry/pose
+  path_topic: /visual_odometry/path
   sample_rate: 10
 
 estimator:
   node: estimator
-  topic: estimator/pose
+  topic: /estimator/pose
   sample_rate: 100
 
 mapper:
   node: mapper
-  topic: mapper/map
+  topic: /mapper/map
   sample_rate: 100
   seg_pts_num: 100
 
 visual_pid:
   node: visual_pid
-  topic: visual_pid/cmd_vel
-  show_topic: visual_pid/debug_image
+  topic: /visual_pid/cmd_vel
+  show_topic: /visual_pid/debug_image
   sample_rate: 20
   correction: 5 # degrees
   confidence_threshold: 0.6

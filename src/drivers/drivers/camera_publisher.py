@@ -11,7 +11,6 @@ def main():
     # load config
     with open("/home/user/ws/src/config/config.yaml", "r") as file:
         config = yaml.safe_load(file)
-    node_name = config["sensors"]["camera"]["node"]
     topic = config["sensors"]["camera"]["topic"]
     sample_rate = config["sensors"]["camera"]["sample_rate"]
     input_stream = config["sensors"]["camera"]["input_stream"]
@@ -20,7 +19,7 @@ def main():
     # ros2 initialization
     rclpy.init(args=None)
     global node
-    node = rclpy.create_node(node_name)
+    node = rclpy.create_node("imx219")
     camera_pub = node.create_publisher(CompressedImage, topic, 10)
     rate = node.create_rate(sample_rate, node.get_clock()) # frequency in Hz
     logger = node.get_logger()

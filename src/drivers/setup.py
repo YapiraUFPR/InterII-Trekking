@@ -25,7 +25,7 @@ setup(
             'color_publisher = drivers.tcs32_publisher:main',
             'imu_publisher = drivers.bno_publisher:main',
             'irdist_publisher = drivers.irdist_publisher:main',
-            'battery_publisher = drivers.battery_publisher:main',
+            'battery_publisher = drivers.ina_publisher:main',
             'motor_listener = drivers.motor_listener:main',
             'led_controller = drivers.led_controller:main',
         ],
