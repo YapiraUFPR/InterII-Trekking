@@ -11,7 +11,7 @@ class TCS3200:
         self.signal = signal 
 
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(signal, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(signal, GPIO.IN)
         GPIO.setup(s2, GPIO.OUT)
         GPIO.setup(s3, GPIO.OUT)
 
@@ -22,14 +22,14 @@ class TCS3200:
 
             GPIO.output(self.s2, signal_s2)
             GPIO.output(self.s3, signal_s3)
-            time.sleep(0.002)
+            time.sleep(0.3)
             start = time.time()
 
             for _ in range(self.NUM_CYCLES):
                 GPIO.wait_for_edge(self.signal, GPIO.FALLING)
 
             duration = time.time() - start 
-            color  = self.NUM_CYCLES / duration  
+            color  = self.NUM_CYCLES / duration
             rgb.append(color)
 
         return rgb
@@ -38,7 +38,8 @@ class TCS3200:
         GPIO.cleanup()
 
 if __name__=='__main__':
-    tcs32 = TCS3200(int(argv[1]), int(argv[2]), int(argv[3]))
+    #tcs32 = TCS3200(int(argv[1]), int(argv[2]), int(argv[3]))
+    tcs32 = TCS3200(int(19), int(26), int(13))
 
     while 1:
         rgb = tcs32.read()

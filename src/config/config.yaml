@@ -4,21 +4,21 @@ sensors:
   imu:
     node: bno08x
     topic: sensors/bno08x/raw
-    sample_rate: 400
+    sample_rate: 300
 
   distance:
     node: vl53l0x
     topic: sensors/vl53l0x/dist
-    sample_rate: 400
+    sample_rate: 300
 
   color:
     node: tcs34725
     topic: sensors/tcs34725/color
     sample_rate: 100
     pins:
-      s2: 23
-      s3: 24
-      signal: 25
+      s2: 19
+      s3: 26
+      signal: 13
 
   camera:
     node: imx

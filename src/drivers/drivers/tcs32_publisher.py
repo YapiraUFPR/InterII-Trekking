@@ -46,9 +46,9 @@ def main():
         
         rgb = tcs.read()
         msg = ColorRGBA()
-        msg.r = float(rgb[0])
-        msg.g = float(rgb[1])
-        msg.b = float(rgb[2])
+        msg.r = (rgb[0])
+        msg.g = (rgb[1])
+        msg.b = (rgb[2])
         msg.a = 1.0
 
         color_pub.publish(msg)
