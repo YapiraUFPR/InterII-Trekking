@@ -4,7 +4,7 @@ import yaml
 from sensor_msgs.msg import Range
 from sys import argv
 from .libs.adafruit_vl53l0x import VL53L0X
-from .libs.adafruit_bitbangio import I2C
+from .libs.i2c import I2C
 import board
 from time import sleep
 
@@ -15,6 +15,7 @@ def main():
         config = yaml.safe_load(file)
     node_name = config["sensors"]["distance"]["node"]
     topic = config["sensors"]["distance"]["topic"]
+    i2c_bus = config["sensors"]["distance"]["bus"]
     sample_rate = config["sensors"]["distance"]["sample_rate"]
 
     # ros2 initialization
@@ -22,7 +23,6 @@ def main():
     global node
     node = rclpy.create_node(node_name)
     pub = node.create_publisher(Range, topic, 10)
-    rate = node.create_rate(sample_rate)  # frequency in Hz
     logger = node.get_logger()
     logger.info('Distance sensor node launched.')
 
@@ -32,7 +32,7 @@ def main():
     while vl5 is None:
         logger.info('Initializing sensor TCS347...')
         try:
-            i2c = I2C(scl=board.D27, sda=board.D22, frequency=sample_rate*1000)
+            i2c = I2C(i2c_bus, sample_rate*1000)
             vl5 = VL53L0X(i2c, address=0x29)
         except Exception as e:
             vl5 = None

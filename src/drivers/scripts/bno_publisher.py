@@ -6,7 +6,7 @@ import rclpy
 import yaml
 from sensor_msgs.msg import Imu
 import board
-from .libs.busio import I2C
+from .libs.i2c import I2C
 from .libs.adafruit_bno08x import (
     BNO_REPORT_ACCELEROMETER,
     BNO_REPORT_GYROSCOPE,
@@ -21,16 +21,15 @@ def main():
     # load config
     with open("/home/user/ws/src/config/config.yaml", "r") as file:
         config = yaml.safe_load(file)
-    node_name = config["sensors"]["imu"]["node"]
     topic = config["sensors"]["imu"]["topic"]
     sample_rate = config["sensors"]["imu"]["sample_rate"]
+    i2c_bus = config["sensors"]["imu"]["bus"]
 
     # ros2 initialization
     rclpy.init(args=None)
     global node
-    node = rclpy.create_node(node_name)
+    node = rclpy.create_node("bno08x")
     imu_pub = node.create_publisher(Imu, topic, 10)
-    rate = node.create_rate(sample_rate)  # frequency in Hz
     logger = node.get_logger()
     logger.info('Imu node launched.')
 
@@ -40,7 +39,7 @@ def main():
     while bno is None:
         logger.info('Initializing sensor BNO008x...')
         try:
-            i2c = I2C(board.SCL, board.SDA, frequency=sample_rate*1000)
+            i2c = I2C(i2c_bus, sample_rate*1000)
             bno = BNO08X_I2C(i2c, address=0x4b)  # BNO080 (0x4b) BNO085 (0x4a)
             bno.initialize()
             bno.enable_feature(BNO_REPORT_ACCELEROMETER)
