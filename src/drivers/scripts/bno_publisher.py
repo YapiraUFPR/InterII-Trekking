@@ -16,7 +16,7 @@ from drivers.libs.adafruit_bno08x import (
 )
 from drivers.libs.adafruit_bno08x.i2c import BNO08X_I2C
 from time import sleep
-
+import cv2
 
 class BnoPublisher(Node):
 
@@ -24,11 +24,12 @@ class BnoPublisher(Node):
         super().__init__('bno_publisher')
 
         # load config
-        with open("/home/user/ws/src/config/config.yaml", "r") as file:
-            config = yaml.safe_load(file)
-        topic = config["sensors"]["imu"]["topic"]
-        sample_rate = config["sensors"]["imu"]["sample_rate"]
-        i2c_bus = config["sensors"]["imu"]["bus"]
+        fs = cv2.FileStorage("/home/user/ws/src/config/config.yaml", cv2.FileStorage_READ)
+        imu_config = fs.getNode("sensors").getNode("imu")
+        topic = imu_config.getNode("topic").string()
+        sample_rate = int(imu_config.getNode("sample_rate").real())
+        i2c_bus = int(imu_config.getNode("topic").real())
+        fs.release()
 
         # ros2 initialization
         self.imu_pub = self.create_publisher(Imu, topic, 10)
