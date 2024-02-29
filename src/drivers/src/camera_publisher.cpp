@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <chrono>
+#include <unistd.h>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -12,12 +13,11 @@
 int main(int argc, char *argv[])
 {
     // parse parameters
-    std::string node_name, camera_topic;
+    std::string camera_topic;
     int sample_rate, input_stream;
     std::vector<int> resolution;
     cv::FileStorage fs;
-    fs.open("/home/gab/projetos/yapira/bedman-trekker/src/config/config.yaml", cv::FileStorage::READ);
-    fs["sensors"]["camera"]["node"] >> node_name;
+    fs.open("/home/user/ws/src/config/config.yaml", cv::FileStorage::READ);
     fs["sensors"]["camera"]["topic"] >> camera_topic;
     fs["sensors"]["camera"]["sample_rate"] >> sample_rate;
     fs["sensors"]["camera"]["input_stream"] >> input_stream;
@@ -26,13 +26,13 @@ int main(int argc, char *argv[])
     
     // initialize ros2
     rclcpp::init(argc, argv);
-    auto node = rclcpp::Node::make_shared(node_name);
+    auto node = rclcpp::Node::make_shared("imx_publisher");
     RCLCPP_INFO(node->get_logger(), "Starting camera publisher");
     auto publisher = node->create_publisher<sensor_msgs::msg::CompressedImage>(camera_topic, 10);
-    auto loop_rate = rclcpp::WallRate(sample_rate);
+    // auto loop_rate = rclcpp::WallRate(sample_rate);
 
     // initialize camera
-    cv::VideoCapture cap;
+    cv::VideoCapture cap("nvarguscamerasrc ! video/x-raw(memory:NVMM), width=(int)1920, height=(int)1080,format=(string)NV12, framerate=(fraction)30/1 ! nvvidconv ! video/x-raw, format=(string)BGRx ! videoconvert ! appsink");
     cap.open(input_stream);
     if (!cap.isOpened())
     {
@@ -57,7 +57,8 @@ int main(int argc, char *argv[])
         msg.data = buffer;
         publisher->publish(msg);
 
-        loop_rate.sleep();
+        // loop_rate.sleep();
+        sleep(0.3);
     }
 
     rclcpp::shutdown();

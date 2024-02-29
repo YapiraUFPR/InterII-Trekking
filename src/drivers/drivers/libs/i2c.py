@@ -2,7 +2,7 @@ import board
 
 # SCL, SDA
 BUSES = [
-    {"sda": board.D0, "scl": board.D1, "default": False,},
+    {"sda": board.SDA_1, "scl": board.SCL_1, "default": True,},
     {"sda": board.SDA, "scl": board.SCL, "default": True,},
 ] 
 

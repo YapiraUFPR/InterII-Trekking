@@ -3,8 +3,8 @@ import rclpy
 import yaml
 from sensor_msgs.msg import BatteryState
 from time import sleep
-from .libs.adafruit_ina219 import INA219
-from .libs.i2c import I2C
+from drivers.libs.adafruit_ina219 import INA219
+from drivers.libs.i2c import I2C
 import board
 
 class Battery:

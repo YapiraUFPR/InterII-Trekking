@@ -1,14 +1,13 @@
 %YAML 1.0
----
 sensors:
   imu:
     topic: /sensors/bno08x/raw
-    sample_rate: 400
+    sample_rate: 300
     bus: 1
 
   distance:
     topic: /sensors/vl53l0x/dist
-    sample_rate: 400
+    sample_rate: 300
     bus: 1
 
   color:
@@ -20,7 +19,7 @@ sensors:
       signal: 13
 
   camera:
-    topic: /sensors/imx/compressed
+    topic: /sensors/imx/image_raw/compressed
     sample_rate: 30 # is also framerate
     input_stream: 0
     resolution:

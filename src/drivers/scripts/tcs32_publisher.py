@@ -3,7 +3,7 @@ import rclpy
 import yaml
 from std_msgs.msg import ColorRGBA
 from time import sleep
-from .libs.gy_tcs3200 import TCS3200
+from drivers.libs.gy_tcs3200 import TCS3200
 
 def main():
     

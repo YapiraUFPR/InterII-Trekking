@@ -3,8 +3,8 @@ import rclpy
 import yaml
 from sensor_msgs.msg import Range
 from sys import argv
-from .libs.adafruit_vl53l0x import VL53L0X
-from .libs.i2c import I2C
+from drivers.libs.adafruit_vl53l0x import VL53L0X
+from drivers.libs.i2c import I2C
 import board
 from time import sleep
 
