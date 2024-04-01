@@ -41,6 +41,8 @@ class LedListener : public rclcpp::Node
 public:
     LedListener() : Node("led_listener")
     {
+        RCLCPP_INFO(this->get_logger(), "Starting LED listener...");
+
         // parse parameters
         std::vector<std::string> led_topics;
         std::vector<std::tuple<int, int, int>> led_pins;
@@ -57,6 +59,8 @@ public:
         }
         fs.release();
 
+        RCLCPP_INFO(this->get_logger(), "Initializing %d LEDs...", led_topics.size());
+
         // initialize LEDs
         for (std::tuple<int, int, int> pin : led_pins)
         {
@@ -68,6 +72,8 @@ public:
         {
             this->create_subscription<std_msgs::msg::ColorRGBA>(led_topics[i], 10, std::bind(&LedListener::led_callback, this, std::placeholders::_1, i));
         }
+
+        RCLCPP_INFO(this->get_logger(), "LED listener has been started.");
     }
 
 private:
