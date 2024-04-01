@@ -55,10 +55,19 @@ actuators:
     pin: 18
 
   led: # onboard signal leds
-    - topic: /led_0
-      pin: 17
-    - topic: /led_1
-      pin: 27
+    topics: 
+      - /led_1
+      - /led_2
+    pins:
+      red: # linux gpio notation
+        - 51
+        - 50
+      green:
+        - 77
+        - 14 
+      blue:
+        - 78
+        - 194
 
 visual_odometry:
   node: visual_odometry
