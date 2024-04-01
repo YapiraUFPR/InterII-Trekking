@@ -25,14 +25,21 @@ include_directories(include)
 find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
+# camera_publisher
 add_executable(camera_publisher src/camera_publisher.cpp)
 ament_target_dependencies(camera_publisher rclcpp sensor_msgs OpenCV)
 target_link_libraries( camera_publisher ${OpenCV_LIBS} )
-
 install(TARGETS
   camera_publisher
   DESTINATION lib/${PROJECT_NAME})
 
+# led_listener
+add_executable(led_listener src/led_listener.cpp)
+ament_target_dependencies(led_listener rclcpp std_msgs OpenCV)
+target_link_libraries( led_listener ${OpenCV_LIBS} )
+install(TARGETS
+  led_listener
+  DESTINATION lib/${PROJECT_NAME})
 
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})

@@ -1,6 +1,5 @@
 #include <vector>
 #include <iostream>
-#include <format>
 #include <string>
 #include <chrono>
 #include <unistd.h>
@@ -56,9 +55,7 @@ private:
         //  "videoconvert ! "
         //  "video/x-raw, format=(string)BGR ! appsink"
 
-        return std::format(
-            "nvarguscamerasrc sensor_id={} ! video/x-raw(memory:NVMM), width=(int){}, height=(int){}, framerate=(fraction){}/1 ! nvvidconv flip-method={} ! video/x-raw, width=(int){}, height=(int){}, format=(string)BGRx, ! videoconvert ! video/x-raw, format=(string)BGR ! appsink", sensor_id, img_size.width, img_size.height, frame_rate, flip_method, img_size.width, img_size.height
-        );
+        return "nvarguscamerasrc sensor_id=" + std::to_string(sensor_id) + " ! video/x-raw(memory:NVMM), width=(int)" + std::to_string(img_size.width) + ", height=(int)" + std::to_string(img_size.height) + ", framerate=(fraction)" + std::to_string(frame_rate) + "/1 ! nvvidconv flip-method=" + std::to_string(flip_method) + " ! video/x-raw, width=(int)" + std::to_string(img_size.width) + ", height=(int)" + std::to_string(img_size.height) + ", format=(string)BGRx, ! videoconvert ! video/x-raw, format=(string)BGR ! appsink";
     }
 
     void publish(void)

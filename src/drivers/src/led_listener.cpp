@@ -1,6 +1,5 @@
 #include <vector>
 #include <string>
-#include <iostream>
 
 #include <opencv2/opencv.hpp>
 
@@ -17,8 +16,6 @@ public:
         this->red = JetsonGPIO(red_pin, JetsonGPIO::OUTPUT, JetsonGPIO::HIGH);
         this->green = JetsonGPIO(green_pin, JetsonGPIO::OUTPUT, JetsonGPIO::HIGH);
         this->blue = JetsonGPIO(blue_pin, JetsonGPIO::OUTPUT, JetsonGPIO::HIGH);
-
-        std::cout << this->red.pin << std::endl;
     }
 
     void setColor(bool r, bool g, bool b)
@@ -48,13 +45,13 @@ public:
         std::vector<std::tuple<int, int, int>> led_pins;
         cv::FileStorage fs;
         fs.open("/home/user/ws/src/config/config.yaml", cv::FileStorage::READ);
-        fs["sensors"]["led"]["topics"] >> led_topics;
+        fs["actuators"]["led"]["topics"] >> led_topics;
         for (size_t i = 0; i < led_topics.size(); i++)
         {
             int r, g, b;
-            fs["sensors"]["led"]["pins"]["red"][i] >> r;
-            fs["sensors"]["led"]["pins"]["green"][i] >> g;
-            fs["sensors"]["led"]["pins"]["blue"][i] >> b;
+            fs["actuators"]["led"]["pins"]["red"][i] >> r;
+            fs["actuators"]["led"]["pins"]["green"][i] >> g;
+            fs["actuators"]["led"]["pins"]["blue"][i] >> b;
             led_pins.push_back(std::make_tuple(r, g, b));
         }
         fs.release();
@@ -70,7 +67,8 @@ public:
         // initialize subscribers
         for (size_t i = 0; i < led_topics.size(); i++)
         {
-            this->create_subscription<std_msgs::msg::ColorRGBA>(led_topics[i], 10, std::bind(&LedListener::led_callback, this, std::placeholders::_1, i));
+            std::function<void(const std_msgs::msg::ColorRGBA::SharedPtr msg)> callback = std::bind(&LedListener::led_callback, this, std::placeholders::_1, i);
+            led_subscribers.push_back(this->create_subscription<std_msgs::msg::ColorRGBA>(led_topics[i], 10, callback));
         }
 
         RCLCPP_INFO(this->get_logger(), "LED listener has been started.");
@@ -78,6 +76,7 @@ public:
 
 private:
     std::vector<Led> leds;
+    std::vector<rclcpp::Subscription<std_msgs::msg::ColorRGBA>::SharedPtr> led_subscribers;
 
     void led_callback(const std_msgs::msg::ColorRGBA::SharedPtr msg, int led_idx)
     {

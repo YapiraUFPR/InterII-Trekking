@@ -67,6 +67,11 @@ JetsonGPIO::~JetsonGPIO()
 
 JetsonGPIO& JetsonGPIO::operator=(const JetsonGPIO& t)
 {
+    this->curr_value = t.curr_value;
+    this->direction = t.direction;
+    this->pin_path = t.pin_path;
+    this->pin = t.pin;
+
     return *this;
 }
 
