@@ -30,9 +30,10 @@ public:
         fs.release();
 
         // initialize camera
-        std::string gst_pipeline = this->gstreamerPipeline(input_stream, cv::Size(resolution[0], resolution[1]), 30, 0);
+        std::string gst_pipeline = this->gstreamerPipeline(input_stream, cv::Size(resolution[0], resolution[1]), sample_rate, 0);
         RCLCPP_INFO(this->get_logger(), "Gstreamer pipeline:\n%s", gst_pipeline.c_str());
-        cv::VideoCapture cap(gst_pipeline, cv::CAP_GSTREAMER);
+        // cv::VideoCapture cap(gst_pipeline, cv::CAP_GSTREAMER);
+        cv::VideoCapture cap(0);
         cap.open(input_stream);
         if (!cap.isOpened())
         {
@@ -41,8 +42,8 @@ public:
         RCLCPP_INFO(this->get_logger(), "Camera publisher has been started.");
 
         // initialize publisher
-        publisher = this->create_publisher<sensor_msgs::msg::CompressedImage>(camera_topic, 10);
-        rclcpp::TimerBase::SharedPtr timer = this->create_wall_timer(std::chrono::milliseconds(1000 / sample_rate), std::bind(&ImxPublisher::publish, this));
+        this->publisher = this->create_publisher<sensor_msgs::msg::CompressedImage>(camera_topic, 10);
+        this->timer = this->create_wall_timer(std::chrono::milliseconds(1000 / sample_rate), std::bind(&ImxPublisher::publish, this));
     }
 
 private:
@@ -55,7 +56,32 @@ private:
         //  "videoconvert ! "
         //  "video/x-raw, format=(string)BGR ! appsink"
 
-        return "nvarguscamerasrc sensor_id=" + std::to_string(sensor_id) + " ! video/x-raw(memory:NVMM), width=(int)" + std::to_string(img_size.width) + ", height=(int)" + std::to_string(img_size.height) + ", framerate=(fraction)" + std::to_string(frame_rate) + "/1 ! nvvidconv flip-method=" + std::to_string(flip_method) + " ! video/x-raw, width=(int)" + std::to_string(img_size.width) + ", height=(int)" + std::to_string(img_size.height) + ", format=(string)BGRx, ! videoconvert ! video/x-raw, format=(string)BGR ! appsink";
+        // 'nvarguscamerasrc sensor-mode={sensor_mode} '
+        // '! video/x-raw(memory:NVMM), width={capture_width}, height={capture_height}, format=(string)NV12, framerate=(fraction){fps}/1 !'
+        // ' nvvidconv '
+        // '! video/x-raw, width=(int){width}, height=(int){height}, format=(string)BGRx !'
+        // ' videoconvert '
+        // '! video/x-raw, format=(string)BGR !'
+        // ' appsink name=sink
+
+        const char *fmt = "nvarguscamerasrc \
+            ! video/x-raw(memory:NVMM), width=1280, height=720, framerate=%d/1, format=NV12 \
+            ! nvvidconv flip-method=%d \
+            ! video/x-raw, width=%d, height=%d, format=BGRx \
+            ! videoconvert \
+            ! video/x-raw, format=BGR \
+            ! appsink drop=1";
+
+        int sz = std::snprintf(nullptr, 0, fmt, std::sqrt(2));
+        std::vector<char> buf(sz + 1); // note +1 for null terminator
+        std::sprintf(buf.data(), fmt, 
+             frame_rate, flip_method, img_size.width, img_size.height);
+
+        return std::string(buf.data());
+
+        // return "nvarguscamerasrc sensor_id=" + std::to_string(sensor_id) + 
+        //     " ! video/x-raw(memory:NVMM), width=(int)" + std::to_string(img_size.width) + ", height=(int)" + std::to_string(img_size.height) + 
+        //     ", framerate=(fraction)" + std::to_string(frame_rate) + "/1 ! nvvidconv flip-method=" + std::to_string(flip_method) + " ! video/x-raw, width=(int)" + std::to_string(img_size.width) + ", height=(int)" + std::to_string(img_size.height) + ", format=(string)BGRx, ! videoconvert ! video/x-raw, format=(string)BGR ! appsink";
     }
 
     void publish(void)
@@ -63,7 +89,7 @@ private:
         cv::Mat frame;
         std::vector<uchar> buffer;
         sensor_msgs::msg::CompressedImage msg;
-        
+
         // get frame from camera
         cap >> frame;
         if (frame.empty())
@@ -83,6 +109,7 @@ private:
 
     cv::VideoCapture cap;
     rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr publisher;
+    rclcpp::TimerBase::SharedPtr timer;
 };
 
 int main(int argc, char *argv[])

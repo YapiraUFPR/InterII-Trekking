@@ -24,7 +24,7 @@ sensors:
     input_stream: 0
     resolution:
       width: 640
-      height: 480
+      height: 360
 
   battery:
     sample_rate: 0.5
