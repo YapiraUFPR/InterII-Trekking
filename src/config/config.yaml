@@ -28,20 +28,21 @@ sensors:
 
   battery:
     sample_rate: 0.5
-    sensors:
-      - topic: /sensors/ina219_0/state # sensors battery
-        max_cell_voltage: 4.2
-        min_cell_voltage: 3.8
-        cells: 2
-        capacity: 1800 # mAh
-        bus: 1
-
-      - topic: /sensors/ina219_1/state # motors battery
-        max_cell_voltage: 4.2
-        min_cell_voltage: 3.8
-        cells: 3
-        capacity: 2300 # mAh
-        bus: 0
+    topic: 
+      - /sensors/ina219_0/state # sensors battery
+      - /sensors/ina219_1/state # motors battery
+    type: 
+      - LIPO
+      - LIHV
+    cells: 
+      - 2
+      - 3
+    capacity: 
+      - 1800 # mAh
+      - 2300 # mAh
+    bus:
+      - 1
+      - 0
 
 actuators:
   motors:

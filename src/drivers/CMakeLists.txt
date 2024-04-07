@@ -48,10 +48,15 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/bno_publisher.py
   scripts/ina_publisher.py
-  scripts/irdist_publisher.py
+  scripts/vl5_publisher.py
   scripts/tcs32_publisher.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# Install launch files
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
+)
 
 ament_package()
