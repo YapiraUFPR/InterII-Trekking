@@ -1,0 +1,164 @@
+FROM dustynv/ros:humble-ros-base-l4t-r32.7.1
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ENV ROS_DISTRO humble
+ENV ROS_PYTHON_VERSION 3
+ENV ROS_ROOT /opt/ros/${ROS_DISTRO}
+
+# install bootstrap tools
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y build-essential git \
+    && python3 -m pip install \
+        colcon-common-extensions \
+        colcon-mixin \
+        rosdep \
+        vcstool \
+        argcomplete \
+        cython \
+    && rm -rf /var/lib/apt/lists/*
+
+# setup colcon mixin and metadata
+RUN colcon mixin add default https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml \
+    && colcon mixin update \
+    && colcon metadata add default https://raw.githubusercontent.com/colcon/colcon-metadata-repository/master/index.yaml \
+    && colcon metadata update
+
+# install libraries
+RUN apt-get update && apt-get install -y --no-install-recommends \ 
+    build-essential \
+    libboost-system-dev \
+    libboost-thread-dev \
+    libboost-program-options-dev \
+    libboost-test-dev \
+    libboost-filesystem-dev \
+    libglew-dev \
+    libeigen3-dev \
+    libgeographic-dev \
+    nlohmann-json-dev \
+    libasio-dev \
+    libboost-all-dev \
+    libssl-dev \
+    libwebsocketpp-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# install ros2 packages
+RUN mkdir -p ${ROS_ROOT}/src && cd ${ROS_ROOT} \
+    && rosinstall_generator --deps --rosdistro ${ROS_DISTRO} \
+    geographic_info \
+    common_msgs \
+    angles \
+    > ros2.humble.packages.rosinstall \
+    && vcs import src < ros2.humble.packages.rosinstall
+RUN cd ${ROS_ROOT} && colcon build --merge-install
+
+# install python libraries
+RUN apt-get update && python3 -m pip install --upgrade pip \
+&& python3 -m pip install \
+    numpy \
+    Adafruit_Blinka \
+    adafruit_circuitpython_bitbangio \
+    adafruit_circuitpython_bno08x \
+    adafruit_circuitpython_motor \
+    adafruit_circuitpython_tcs34725 \
+    adafruit_circuitpython_vl53l0x \
+    adafruit_circuitpython_ina219 \
+    adafruit_circuitpython_mpu6050 \
+    adafruit_circuitpython_pca9685 \
+    pytest \
+    rdp \
+    scipy \
+    setuptools \
+    smbus \
+    Jetson.GPIO 
+
+##################################################################
+#################### Install OpenCV 4.5.0 ########################
+##################################################################
+
+ENV CUDA_HOME="/usr/local/cuda"
+ENV PATH="/usr/local/cuda/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
+
+WORKDIR /opt
+
+
+# build OpenCV - https://github.com/mdegans/nano_build_opencv/blob/master/build_opencv.sh
+ARG OPENCV_VERSION="4.5.0"
+
+# install build dependencies
+COPY opencv_install_deps.sh opencv_install_deps.sh
+RUN ./opencv_install_deps.sh
+
+# OpenCV looks for the cuDNN version in cudnn_version.h, but it's been renamed to cudnn_version_v8.h
+RUN ln -s /usr/include/$(uname -i)-linux-gnu/cudnn_version_v8.h /usr/include/$(uname -i)-linux-gnu/cudnn_version.h
+
+# architecture-specific build options
+ARG CUDA_ARCH_BIN=""
+ARG ENABLE_NEON="OFF"
+ARG ENABLE_OPENGL="OFF"
+
+# clone and configure OpenCV repo
+RUN git clone --depth 1 --branch ${OPENCV_VERSION} https://github.com/opencv/opencv.git && \
+    git clone --depth 1 --branch ${OPENCV_VERSION} https://github.com/opencv/opencv_contrib.git
+    
+# patches for FP16/half casts
+RUN sed -i 's|weight != 1.0|(float)weight != 1.0f|' opencv/modules/dnn/src/cuda4dnn/primitives/normalize_bbox.hpp && \
+    sed -i 's|nms_iou_threshold > 0|(float)nms_iou_threshold > 0.0f|' opencv/modules/dnn/src/cuda4dnn/primitives/region.hpp && \
+    grep 'weight' opencv/modules/dnn/src/cuda4dnn/primitives/normalize_bbox.hpp && \
+    grep 'nms_iou_threshold' opencv/modules/dnn/src/cuda4dnn/primitives/region.hpp
+
+# copy and install cuDNN
+COPY cudnn-10.2-linux-x64-v7.6.5.32.tgz /opt/cudnn-10.2-linux-x64-v7.6.5.32.tgz
+RUN tar --extract --file cudnn-10.2-linux-x64-v7.6.5.32.tgz \
+    && cp cuda/include/cudnn*.h /usr/local/cuda/include \
+    && cp cuda/lib64/libcudnn* /usr/local/cuda/lib64 \
+    && chmod a+r /usr/local/cuda/lib64/libcudnn*
+
+# https://github.com/dusty-nv/jetson-containers/issues/237#issue-1683413279
+RUN cd opencv && \
+    mkdir build && \
+    cd build && \
+    echo "configuring OpenCV ${OPENCV_VERSION}, CUDA_ARCH_BIN=${CUDA_ARCH_BIN}, ENABLE_NEON=${ENABLE_NEON}" && \
+    cmake \
+        -D CPACK_BINARY_DEB=ON \
+	   -D BUILD_EXAMPLES=OFF \
+        -D BUILD_opencv_python2=OFF \
+        -D BUILD_opencv_python3=ON \
+	   -D BUILD_opencv_java=OFF \
+        -D CMAKE_BUILD_TYPE=RELEASE \
+        -D CMAKE_INSTALL_PREFIX=/usr/local \
+        -D CUDA_ARCH_BIN=${CUDA_ARCH_BIN} \
+        -D CUDA_ARCH_PTX= \
+        -D CUDA_FAST_MATH=ON \
+        -D CUDNN_LIBRARY=/usr/local/cuda/lib64/libcudnn.so \
+        # -D CUDNN_LIBRARY=/usr/include/$(uname -i)-linux-gnu \
+        -D CUDNN_INCLUDE_DIR=/usr/local/cuda/include \
+        -D EIGEN_INCLUDE_PATH=/usr/include/eigen3 \
+	   -D WITH_EIGEN=ON \
+        -D ENABLE_NEON=${ENABLE_NEON} \
+        -D OPENCV_DNN_CUDA=ON \
+        -D OPENCV_ENABLE_NONFREE=ON \
+        -D OPENCV_EXTRA_MODULES_PATH=/opt/opencv_contrib/modules \
+        -D OPENCV_GENERATE_PKGCONFIG=ON \
+	   -D OpenGL_GL_PREFERENCE=GLVND \
+        -D WITH_CUBLAS=ON \
+        -D WITH_CUDA=ON \
+        -D WITH_CUDNN=ON \
+        -D WITH_GSTREAMER=ON \
+        -D WITH_LIBV4L=ON \
+	   -D WITH_GTK=ON \
+        -D WITH_OPENGL=${ENABLE_OPENGL} \
+	   -D WITH_OPENCL=OFF \
+	   -D WITH_IPP=OFF \
+        -D WITH_TBB=ON \
+	   -D BUILD_TIFF=ON \
+	   -D BUILD_PERF_TESTS=OFF \
+	   -D BUILD_TESTS=OFF \
+	   ../
+	   
+RUN cd opencv/build && make -j$(nproc)
+RUN cd opencv/build && make install
+RUN cd opencv/build && make package
+
+RUN cd opencv/build && tar -czvf /opt/OpenCV-${OPENCV_VERSION}-$(uname -i).tar.gz *.deb
