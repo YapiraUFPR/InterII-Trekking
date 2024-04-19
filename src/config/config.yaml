@@ -95,3 +95,8 @@ visual_pid:
   correction: 5 # degrees
   confidence_threshold: 0.6
   error_threshold: 10 # pixels
+
+visualization_node:
+  topics:
+    - /fake_pose
+    - /fake_pose2

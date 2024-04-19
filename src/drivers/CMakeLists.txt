@@ -15,7 +15,6 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
-find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
 # Include Cpp "include" directory

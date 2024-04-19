@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import PoseWithCovarianceStamped
+from geometry_msgs.msg import PoseStamped
 import numpy as np
 
 TOPIC = "/fake_pose"
@@ -16,7 +16,7 @@ class FakePosePublisher(Node):
         
         self.curr_pose = np.array([0.0, 0.0, 0.0]) # in 3D
 
-        self.publisher = self.create_publisher(PoseWithCovarianceStamped, "/fake_pose", 10)
+        self.publisher = self.create_publisher(PoseStamped, "/fake_pose", 10)
         self.timer = self.create_timer(1/FREQUENCY, self.timer_callback)
 
         self.logger.info("Fake pose publisher started.")
@@ -35,14 +35,18 @@ class FakePosePublisher(Node):
         self.curr_pose[2] += angle
 
         # Prepare and publish ROS message.
-        msg = PoseWithCovarianceStamped()
+        msg = PoseStamped()
 
         msg.header.frame_id = "world"
         msg.header.stamp = self.get_clock().now().to_msg()
 
-        msg.pose.pose.position.x = self.curr_pose[0]
-        msg.pose.pose.position.y = self.curr_pose[1]
-        msg.pose.pose.position.z = 0.0
+        msg.pose.position.x = self.curr_pose[0]
+        msg.pose.position.y = self.curr_pose[1]
+        msg.pose.position.z = 0.0
+
+        msg.pose.orientation.x = 0.0
+        msg.pose.orientation.y = 0.0
+        msg.pose.orientation.z = np.sin(self.curr_pose[2]/2)
 
         self.publisher.publish(msg)
 
