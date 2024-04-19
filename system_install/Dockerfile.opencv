@@ -39,7 +39,7 @@ RUN ./ros2_build.sh
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
 # Append the ROS setup to the bashrc
-RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+RUN echo "source /opt/ros/humble/install/setup.bash" >> ~/.bashrc
 
 WORKDIR /
 
