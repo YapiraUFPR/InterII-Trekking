@@ -1,3 +1,8 @@
+#include "rclcpp/rclcpp.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include <fstream>
+#include <string>
+
 class PoseLogger : public rclcpp::Node
 {
 public:
