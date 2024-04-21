@@ -32,7 +32,7 @@ include_directories( ${OpenCV_INCLUDE_DIRS} )
 find_package(jetson-utils REQUIRED)
 
 # camera_publisher
-add_executable(camera_publisher src/camera_publisher.cpp include/image_converter.cpp include/ros_compat.cpp) 
+add_executable(camera_publisher src/camera_publisher.cpp src/image_converter.cpp src/ros_compat.cpp) 
 ament_target_dependencies(camera_publisher rclcpp sensor_msgs vision_msgs jetson-utils OpenCV CUDA)
 target_link_libraries( camera_publisher ${OpenCV_LIBS} "/usr/local/lib/libjetson-utils.so")
 install(TARGETS

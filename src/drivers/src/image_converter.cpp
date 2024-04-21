@@ -67,6 +67,7 @@ static std::string imageFormatToEncoding( imageFormat fmt )
 		case IMAGE_BAYER_BGGR:	return sensor_msgs::image_encodings::BAYER_BGGR8;
 		case IMAGE_BAYER_GBRG:	return sensor_msgs::image_encodings::BAYER_GBRG8;
 		case IMAGE_BAYER_GRBG:	return sensor_msgs::image_encodings::BAYER_GRBG8;
+		default: return "invalid";
 	}
 
 	return "invalid";
