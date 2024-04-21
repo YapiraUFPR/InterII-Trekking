@@ -27,7 +27,7 @@ class BnoPublisher(Node):
         imu_config = fs.getNode("sensors").getNode("imu")
         topic = imu_config.getNode("topic").string()
         sample_rate = int(imu_config.getNode("sample_rate").real())
-        i2c_bus = int(imu_config.getNode("topic").real())
+        i2c_bus = int(imu_config.getNode("bus").real())
         fs.release()
 
         # sensor initialization
