@@ -16,18 +16,25 @@ find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
 find_package(sensor_msgs REQUIRED)
+find_package(vision_msgs REQUIRED)
 
 # Include Cpp "include" directory
 include_directories(include)
+
+# Include CUDA
+find_package(CUDA  REQUIRED)
+include_directories("${CUDA_INCLUDE_DIRS}")
 
 # OpenCV dependencies
 find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
+find_package(jetson-utils REQUIRED)
+
 # camera_publisher
-add_executable(camera_publisher src/camera_publisher.cpp)
-ament_target_dependencies(camera_publisher rclcpp sensor_msgs OpenCV)
-target_link_libraries( camera_publisher ${OpenCV_LIBS} )
+add_executable(camera_publisher src/camera_publisher.cpp include/image_converter.cpp include/ros_compat.cpp) 
+ament_target_dependencies(camera_publisher rclcpp sensor_msgs vision_msgs jetson-utils OpenCV CUDA)
+target_link_libraries( camera_publisher ${OpenCV_LIBS} "/usr/local/lib/libjetson-utils.so")
 install(TARGETS
   camera_publisher
   DESTINATION lib/${PROJECT_NAME})
