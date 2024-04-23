@@ -75,6 +75,21 @@ RUN apt-get update && python3 -m pip install --upgrade pip \
 # For packages that we need to compile from source
 WORKDIR /install_deps 
 
+# Install torch and torchvision
+RUN wget https://nvidia.box.com/shared/static/p57jwntv436lfrd78inwl7iml6p13fzh.whl -O torch-1.8.0-cp36-cp36m-linux_aarch64.whl -O torch-1.9.0-cp36-cp36m-linux_aarch64.whl \
+    && apt-get install python3-pip libopenblas-base libopenmpi-dev \
+    && python3 -m pip install Cython pandas \
+    && python3 -m pip install torch-1.9.0-cp36-cp36m-linux_aarch64.whl \
+    && python3 -m pip install torchvision
+
+# Install tensorrt
+COPY ./tensorrt/tensorrt-TensorRT-7.2.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.1.tar.gz TensorRT-7.2.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.1.tar.gz
+RUN tar -xf TensorRT-7.2.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.1.tar.gz \
+    && rm TensorRT-7.2.3.4.Ubuntu-18.04.x86_64-gnu.cuda-10.2.cudnn8.1.tar.gz \
+    && echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/install_deps/TensorRT-7.2.3.4/lib" >> ~/.bashrc \
+    && cd TensorRT-7.2.3.4/python \
+    && python3 
+
 # Install ceres 1.14
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

@@ -19,12 +19,12 @@ sensors:
       signal: 13
 
   camera:
-    topic: /sensors/imx/image_raw/compressed
+    topic: /sensors/imx/image_raw
     sample_rate: 30 # is also framerate
     input_stream: csi://0
     resolution:
       width: 640
-      height: 640
+      height: 480
 
   battery:
     sample_rate: 0.5
@@ -70,16 +70,14 @@ actuators:
         - 78
         - 194
 
-visual_odometry:
-  node: visual_odometry
-  topic: /visual_odometry/pose
-  path_topic: /visual_odometry/path
+cone_detector:
+  topic: /cone_detector/detections
   sample_rate: 10
-
-estimator:
-  node: estimator
-  topic: /estimator/pose
-  sample_rate: 100
+  confidence_threshold: 0.6
+  error_threshold: 10 # pixels
+  model_path: /home/user/ws/Data/models/yolov5-cone-best.pt
+  debug_img: 1
+  debug_topic: /cone_detector/debug_image
 
 mapper:
   node: mapper

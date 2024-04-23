@@ -1,5 +1,5 @@
 import rclpy
-from sensor_msgs.msg import CompressedImage
+from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 import cv2 
 import numpy as np
@@ -36,7 +36,7 @@ def main():
     rclpy.init()
     global node 
     node = rclpy.create_node(node_name)
-    image_listener = node.create_subscription(CompressedImage, image_topic, image_callback, 10)
+    image_listener = node.create_subscription(Image, image_topic, image_callback, 10)
     twist_publisher = node.create_publisher(Twist, topic, 10)
     image_publisher = node.create_publisher(CompressedImage, show_topic, 10)
     rate = node.create_rate(sample_rate)  # frequency in Hz
