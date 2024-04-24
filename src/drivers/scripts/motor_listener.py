@@ -1,98 +1,85 @@
+#!/usr/bin/env python3
 import rclpy
+from rclpy.node import Node
+
 from geometry_msgs.msg import Twist
-from gpiozero import Servo
-import yaml
-from time  import sleep
-import subprocess
+from std_msgs.msg import Bool
 
-# run sudo pigpiod
-try:
-    subprocess.Popen(["sudo", "pigpiod"])
-except Exception:
-    pass 
+from adafruit_servokit import ServoKit
+from drivers.libs.i2c import I2C
+import cv2
+from time import sleep
 
-target_speed = 0.0
-target_angle = 0.0
+RAD_TO_DEG = 180 / 3.14159265358979323846
 
-def twist_callback(msg):
-    global node
-    global target_speed
-    global target_angle
+class MotorsListener(Node):
 
-    logger = node.get_logger()
+    def __init__(self):
+        super().__init__('motor_listener')
+        self.logger = self.get_logger()
+        self.logger.info('Initializing motor listener node...')
 
-    speed = msg.linear.x
-    angle = msg.angular.z
-    logger.info(f"Received twist msg with {speed} and {angle}")
+        # Load config
+        fs = cv2.FileStorage("/home/user/ws/src/config/config.yaml", cv2.FileStorage_READ)
+        motors_config = fs.getNode("motors")
+        topic = motors_config.getNode("topic").string()
+        brake_topic = motors_config.getNode("brake_topic").string()
+        self.use_brake = bool(motors_config.getNode("use_brake").real())
+        self.servo_channel = int(motors_config.getNode("servo_channel").real())
+        self.esc_channel = int(motors_config.getNode("esc_channel").real())
+        self.max_speed = int(motors_config.getNode("max_speed").real()) / 100
+        self.brake = False
+        fs.release()
 
-    speed = max(-1, min(speed, 1))
-    angle = max(-1, min(angle, 1))
+        # Init servo kit 
+        self.kit = ServoKit(channels=16)
+        self.kit.servo[self.servo_channel].angle = 90
+        self.kit.continuous_servo[self.esc_channel].throttle = 0
 
-    target_speed = speed
-    target_angle = angle
-    logger.info(f"Speed: {speed}, angle: {angle}")
+        self.current_angle = 90
+        self.current_speed = 0
 
+        # Init subscribers
+        self.motors_subscriber = self.create_subscription(Twist, topic, self.motors_callback, 10)
+        if self.use_brake:
+            self.brake_subscriber = self.create_subscription(Bool, brake_topic, self.brake_callback, 10)
 
-def main():
+        self.logger.info('Motor listener node launched.')
 
-    # load config
-    with open("/home/user/ws/src/config/config.yaml", "r") as file:
-        config = yaml.safe_load(file)
-    node_name = config["motors"]["node"]
-    topic = config["motors"]["topic"]
-    sample_rate = config["motors"]["sample_rate"]
-    esc_pin = config["motors"]["esc_pin"]
-    servo_pin = config["motors"]["servo_pin"]
+    def motors_callback(self, msg: Twist):
+        self.logger.info("Received motor data...", once=True)
 
-    # node init
-    rclpy.init()
-    global node
-    node = rclpy.create_node(node_name)
-    twist_listener = node.create_subscription(Twist, topic, twist_callback, 10)
-    rate = node.create_rate(sample_rate)  # frequency in Hz
-    twist_listener, rate
-    logger = node.get_logger()
-    logger.info('Motors node launched.')
+        if self.brake:
+            return
 
-    # motors init
-    esc = Servo(esc_pin, initial_value=0.0)
-    servo_motor = Servo(servo_pin, initial_value=0)
-    sleep(3)
-    esc.value = 0.0
-    sleep(5)
-    logger.info("Esc initialized.") 
+        # Convert from rad to degrees
+        angle = msg.angular.z * RAD_TO_DEG
+        self.current_angle += angle
+        self.current_angle = max(0, min(180, self.current_angle))
+        self.kit.servo[self.servo_channel].angle = self.current_angle
 
+        self.current_speed += msg.linear.x
+        self.current_speed = max(-1, min(1, self.current_speed))
+        self.kit.continuous_servo[self.esc_channel].throttle = self.current_speed
 
-    global target_speed
-    global target_angle
+    def brake_callback(self, msg: Bool):
+        self.logger.info("Received brake signal...")
 
-    speed = 0.0
-    angle = 0.0
-    try:
-        while True:
-            speed_diff = target_speed - speed
-            if speed_diff != 0.0:
-                speed_inc = 0.01 if speed_diff > 0.0 else -0.05
-                speed = esc.value + speed_inc
-                esc.value = max(-1, min(speed, 1))
+        if msg.data:
+            self.logger.info("Braking...")
+            self.kit.continuous_servo[self.esc_channel].throttle = 0
+            self.kit.servo[self.servo_channel].angle = 90
+            self.current_speed = 0
+            self.current_angle = 90
 
-            ang_diff = target_angle - angle
-            if ang_diff != 0.0:
-                angle_inc = 0.01 if ang_diff > 0.0 else -0.05
-                angle = servo_motor.value + angle_inc
-                servo_motor.value = max(-1, min(angle, 1))
-
-            # esc.value = target_speed
-            # servo_motor.value = target_angle
-
-            logger.info(f"Current speed: {speed}, {angle}")
-            rclpy.spin_once(node)
-
-    except KeyboardInterrupt:
-        esc.value = 0.0
-        servo_motor.value = 0.0
-        logger.info("Motors stopped.") 
-        return
+    def __del__(self):
+        self.kit.continuous_servo[self.esc_channel].throttle = 0
+        self.kit.servo[self.servo_channel].angle = 90
 
 if __name__ == "__main__":
-    main()
+    rclpy.init(args=None)
+
+    motors_listener = MotorsListener()
+    rclpy.spin(motors_listener)
+    motors_listener.destroy_node()
+    rclpy.shutdown()
