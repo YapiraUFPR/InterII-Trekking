@@ -37,7 +37,7 @@ from micropython import const
 try:
     from typing import Optional, Tuple, Type
     from types import TracebackType
-    from busio import I2C
+    from .busio import I2C
 except ImportError:
     pass
 

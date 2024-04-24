@@ -7,6 +7,7 @@ from std_msgs.msg import Bool
 
 from drivers.libs.adafruit_servokit import ServoKit
 import cv2
+from time import sleep
 
 RAD_TO_DEG = 180 / 3.14159265358979323846
 
@@ -30,9 +31,21 @@ class MotorsListener(Node):
         fs.release()
 
         # Init servo kit 
-        self.kit = ServoKit(channels=16)
-        self.kit.servo[self.servo_channel].angle = 90
-        self.kit.continuous_servo[self.esc_channel].throttle = 0
+        self.kit = None
+        timeout = 5
+        while self.kit is None:
+            self.logger.info('Initializing motors with PCA9685...')
+            try:
+                self.kit = ServoKit(channels=16)
+                self.kit.servo[self.servo_channel].angle = 90
+                self.kit.continuous_servo[self.esc_channel].throttle = 0
+            except Exception as e:
+                self.kit = None
+                self.logger.error(f"Failed to initialize motors: {e}")
+                self.logger.error(f"Retrying in {timeout} seconds...")
+                sleep(timeout)
+                timeout *= 2
+        sleep(0.5)  # ensure IMU is initialized
 
         self.current_angle = 90
         self.current_speed = 0

@@ -56,6 +56,7 @@ install(PROGRAMS
   scripts/ina_publisher.py
   scripts/vl5_publisher.py
   scripts/tcs32_publisher.py
+  scripts/motor_listener.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
