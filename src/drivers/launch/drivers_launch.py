@@ -63,7 +63,7 @@ def launch_setup(context):
         Node(
             package='drivers',
             condition=IfCondition(LaunchConfiguration("motor_enable")),
-            executable='motor_listener',
+            executable='motor_listener.py',
         ),
     ]
 
