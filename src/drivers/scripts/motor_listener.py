@@ -5,10 +5,8 @@ from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Bool
 
-from adafruit_servokit import ServoKit
-from drivers.libs.i2c import I2C
+from drivers.libs.adafruit_servokit import ServoKit
 import cv2
-from time import sleep
 
 RAD_TO_DEG = 180 / 3.14159265358979323846
 
