@@ -52,6 +52,8 @@ actuators:
     esc_channel: 0
     servo_channel: 1
     max_speed: 30
+    angle_step: 0.05
+    speed_step: 1 # degrees
 
   flare: # led tape
     topic: /flare

@@ -55,8 +55,9 @@ WAFFLE_MAX_LIN_VEL = 0.26
 WAFFLE_MAX_ANG_VEL = 1.82
 
 LIN_VEL_STEP_SIZE = 0.01
-ANG_VEL_STEP_SIZE = 0.01
+ANG_VEL_STEP_SIZE = 0.1
 
+ANG_TO_RAD = 3.14159265358979323846 / 180.0
 
 msg = """
 Control Your TurtleBot3!
@@ -136,6 +137,8 @@ def main():
     control_linear_velocity = 0.0
     control_angular_velocity = 0.0
 
+    angle =  90
+
     try:
         print(msg)
         while(1):
@@ -170,25 +173,28 @@ def main():
                 print(msg)
                 status = 0
 
+            control_linear_velocity = make_simple_profile(
+                control_linear_velocity,
+                target_linear_velocity,
+                (LIN_VEL_STEP_SIZE / 2.0))
+
+            control_angular_velocity = make_simple_profile(
+                control_angular_velocity,
+                target_angular_velocity,
+                (ANG_VEL_STEP_SIZE / 2.0))
+
+
+            angle = control_angular_velocity * 90 + 90
+            angle = int(max(0, min(angle, 180)))
+
+            mspeed = control_linear_velocity * 100
+            mspeed = int(max(-100, min(mspeed, 100)))
+
+            print(mspeed, angle)
+
             twist = Twist()
-
-            # control_linear_velocity = make_simple_profile(
-            #     control_linear_velocity,
-            #     target_linear_velocity,
-            #     (LIN_VEL_STEP_SIZE / 2.0))
-
-            twist.linear.x = target_linear_velocity
-            twist.linear.y = 0.0
-            twist.linear.z = 0.0
-
-            # control_angular_velocity = make_simple_profile(
-            #     control_angular_velocity,
-            #     target_angular_velocity,
-            #     (ANG_VEL_STEP_SIZE / 2.0))
-
-            twist.angular.x = 0.0
-            twist.angular.y = 0.0
-            twist.angular.z = target_angular_velocity
+            twist.linear.x = mspeed
+            twist.angular.z = angle * ANG_TO_RAD
 
             pub.publish(twist)
 

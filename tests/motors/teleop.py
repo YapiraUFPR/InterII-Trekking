@@ -57,6 +57,7 @@ WAFFLE_MAX_ANG_VEL = 1.82
 LIN_VEL_STEP_SIZE = 0.01
 ANG_VEL_STEP_SIZE = 0.1
 
+ANG_TO_RAD = 3.14159265358979323846 / 180.0
 
 msg = """
 Control Your TurtleBot3!
@@ -77,14 +78,6 @@ CTRL-C to quit
 e = """
 Communications Failed
 """
-
-import board
-import pwmio
-from adafruit_motor import servo
-from tests.motors.esc import Esc
-
-ESC_PIN = 14
-SERVO_PIN = board.D18
 
 def get_key(settings):
     if os.name == 'nt':
@@ -144,10 +137,6 @@ def main():
     control_linear_velocity = 0.0
     control_angular_velocity = 0.0
 
-    esc =  Esc(ESC_PIN)
-    servo_pwm = pwmio.PWMOut(SERVO_PIN, frequency=50)
-    servo_motor = servo.Servo(servo_pwm)
-    servo_motor.angle = 90  
     angle =  90
 
     try:
@@ -184,25 +173,16 @@ def main():
                 print(msg)
                 status = 0
 
-            # twist = Twist()
 
             control_linear_velocity = make_simple_profile(
                 control_linear_velocity,
                 target_linear_velocity,
                 (LIN_VEL_STEP_SIZE / 2.0))
 
-            # twist.linear.x = control_linear_velocity
-            # twist.linear.y = 0.0
-            # twist.linear.z = 0.0
-
             control_angular_velocity = make_simple_profile(
                 control_angular_velocity,
                 target_angular_velocity,
                 (ANG_VEL_STEP_SIZE / 2.0))
-
-            # twist.angular.x = 0.0
-            # twist.angular.y = 0.0
-            # twist.angular.z = control_angular_velocity
 
 
             angle = control_angular_velocity * 90 + 90
@@ -213,9 +193,9 @@ def main():
 
             print(mspeed, angle)
 
-            esc.set_speed(mspeed)
-            servo_motor.angle = angle
-
+            # twist = Twist()
+            # twist.linear.x = mspeed
+            # twist.angular.z = angle * ANG_TO_RAD
 
             # pub.publish(twist)
 

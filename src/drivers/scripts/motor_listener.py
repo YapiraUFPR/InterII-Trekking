@@ -27,6 +27,9 @@ class MotorsListener(Node):
         self.servo_channel = int(motors_config.getNode("servo_channel").real())
         self.esc_channel = int(motors_config.getNode("esc_channel").real())
         self.max_speed = int(motors_config.getNode("max_speed").real()) / 100
+        self.speed_step = motors_config.getNode("speed_step").real()
+        self.angle_step = int(motors_config.getNode("angle_step").real())
+        
         self.brake = False
         fs.release()
 
@@ -48,7 +51,9 @@ class MotorsListener(Node):
         sleep(0.5)  # ensure IMU is initialized
 
         self.current_angle = 90
+        self.target_angle = 90
         self.current_speed = 0
+        self.target_speed = 0
 
         # Init subscribers
         self.motors_subscriber = self.create_subscription(Twist, topic, self.motors_callback, 10)
@@ -65,13 +70,11 @@ class MotorsListener(Node):
 
         # Convert from rad to degrees
         angle = msg.angular.z * RAD_TO_DEG
-        self.current_angle += angle
-        self.current_angle = max(0, min(180, self.current_angle))
-        self.kit.servo[self.servo_channel].angle = self.current_angle
+        self.target_angle += angle
+        self.target_angle = max(0, min(180, self.target_angle))
 
-        self.current_speed += msg.linear.x
-        self.current_speed = max(-1, min(1, self.current_speed))
-        self.kit.continuous_servo[self.esc_channel].throttle = self.current_speed
+        self.target_speed += msg.linear.x
+        self.target_speed = max(-1, min(1, self.target_speed))
 
     def brake_callback(self, msg: Bool):
         self.logger.info("Received brake signal...")
@@ -83,6 +86,24 @@ class MotorsListener(Node):
             self.current_speed = 0
             self.current_angle = 90
 
+    def make_simple_profile(self, output, input, slop):
+        if input > output:
+            output = min(input, output + slop)
+        elif input < output:
+            output = max(input, output - slop)
+        return output
+
+    def speed_profile(self):
+
+        while not self.brake:
+            self.current_speed = self.make_simple_profile(self.current_speed, self.target_speed, self.speed_step)
+            self.kit.continuous_servo[self.esc_channel].throttle = self.current_speed
+
+            self.current_angle = self.make_simple_profile(self.current_angle, self.target_angle, self.angle_step)
+            self.kit.servo[self.servo_channel].angle = self.current_angle
+            
+            rclpy.spin_once(self, timeout_sec=0.05)
+
     def __del__(self):
         self.kit.continuous_servo[self.esc_channel].throttle = 0
         self.kit.servo[self.servo_channel].angle = 90
@@ -91,6 +112,7 @@ if __name__ == "__main__":
     rclpy.init(args=None)
 
     motors_listener = MotorsListener()
-    rclpy.spin(motors_listener)
+    motors_listener.speed_profile()
+
     motors_listener.destroy_node()
     rclpy.shutdown()
