@@ -86,19 +86,22 @@ class MotorsListener(Node):
             self.current_speed = 0
             self.current_angle = 90
 
-    def make_simple_profile(self, target_speed, curr_speed, step):
-        if curr_speed > target_speed:
+    def make_simple_profile(self, target_speed, current_speed, step):
+        print(target_speed, current_speed, step)
+        if current_speed > target_speed:
             return current_speed - step
-        elif curr_speed < target_speed:
+        elif current_speed < target_speed:
             return current_speed + step
         return current_speed
 
     def speed_profile(self):
 
         while not self.brake:
+            print("speed")
             self.current_speed = self.make_simple_profile(self.target_speed, self.current_speed, self.speed_step)
             self.kit.continuous_servo[self.esc_channel].throttle = self.current_speed 
 
+            print("angle")
             self.current_angle = self.make_simple_profile(self.target_angle, self.current_angle, self.angle_step)
             self.kit.servo[self.servo_channel].angle = self.current_angle
             

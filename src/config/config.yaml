@@ -113,6 +113,11 @@ steering:
     - 255
     - 255
 
+pose_logger:
+  topic: /ov_msckf/loop_pose
+  output_file: /home/user/ws/Data/maps/track.txt
+  skip_poses: 50
+
 visualization_node:
   topics:
     - /steering/map
