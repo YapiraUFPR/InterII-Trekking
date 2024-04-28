@@ -11,7 +11,8 @@ from cv_bridge import CvBridge
 import cv2
 
 import torch
-# import torch.onnx
+from obj_detector.pytorch_yolov4 import models as yolov4
+from obj_detector.pytorch_yolov4.tool.utils import do_detect
 
 class ConeDetector(Node):
     
@@ -36,7 +37,8 @@ class ConeDetector(Node):
             self.debug_img = bool(detector_config.getNode("debug_img").real())
             self.debug_topic = detector_config.getNode("debug_topic").string()
             fs.release()
-    
+
+            self.logger.info("Initializing YoloV4...")    
             # Check CUDA avaliability
             if torch.cuda.is_available():
                 self.logger.info("CUDA is available.")
@@ -44,14 +46,14 @@ class ConeDetector(Node):
             else:
                 self.logger.warn("CUDA is not available. Will use CPU.")
 
-            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-            # self.model = torch.hub.load('ultralytics/yolov5', 'custom', model_path).to(self.device).eval()
-            self.model = torch.load(model_path).to(self.device).eval()
-            self.model.conf = confidence_threshold 
-            self.model.iou = 0.5  # NMS IoU threshold (0-1)
-            self.model.classes = [0]  # only detect class 0 (cone)
-            self.model.names = ['cone']
-            self.model.autoshape()
+            self.model = yolov4.Yolov4(n_classes=1)
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            pretrained_dict = torch.load(model_path, map_location=device)
+            self.model.load_state_dict(pretrained_dict)
+            self.model.cuda()
+            self.model.eval()
+
+            self.logger.info("Model loaded successfully.")
     
             # Init publishers
             self.image_listener = self.create_subscription(Image, self.img_topic, self.image_callback, 10)
@@ -68,7 +70,7 @@ class ConeDetector(Node):
         def timer_callback(self):
             # Detect cone
             if self.current_image is not None:
-                inference_results = self.model(self.current_image)
+                inference_results = do_detect(self.model, self.current_image, 0.5, 1, 0.4, True)
     
                 # Get bounding box and center
                 if len(inference_results) > 0:

@@ -193,8 +193,8 @@ def main():
             print(mspeed, angle)
 
             twist = Twist()
-            twist.linear.x = mspeed
-            twist.angular.z = angle * ANG_TO_RAD
+            twist.linear.x = float(mspeed / 100)
+            twist.angular.z = float(angle * ANG_TO_RAD)
 
             pub.publish(twist)
 

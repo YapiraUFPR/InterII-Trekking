@@ -47,6 +47,14 @@ install(TARGETS
   led_listener
   DESTINATION lib/${PROJECT_NAME})
 
+# flare listener
+add_executable(flare_listener src/flare_listener.cpp)
+ament_target_dependencies(flare_listener rclcpp std_msgs OpenCV)
+target_link_libraries( flare_listener ${OpenCV_LIBS} )
+install(TARGETS
+  flare_listener
+  DESTINATION lib/${PROJECT_NAME})
+
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
 
@@ -55,7 +63,7 @@ install(PROGRAMS
   scripts/bno_publisher.py
   scripts/ina_publisher.py
   scripts/vl5_publisher.py
-  scripts/tcs32_publisher.py
+  scripts/tcs34_publisher.py
   scripts/motor_listener.py
   DESTINATION lib/${PROJECT_NAME}
 )

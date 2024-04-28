@@ -3,6 +3,7 @@
 
 #include <string>
 #include <fstream>
+#include <iostream>
 
 class JetsonGPIO
 {
@@ -44,14 +45,19 @@ JetsonGPIO::JetsonGPIO(int pin, JetsonGPIO::Direction direction, JetsonGPIO::Val
     this->pin_path = this->gpio_path + "/gpio" + std::to_string(pin);
 
     // export pin
-    std::ofstream export_file(this->gpio_path + "/export");
-    export_file << this->pin;
-    export_file.close();
+    std::string command = "echo " + std::to_string(this->pin) + " > " + this->gpio_path + "/export";
+    std::cout << command << std::endl;
+    system(command.c_str());
+    // std::ofstream export_file(this->gpio_path + "/export");
+    // export_file << this->pin;
+    // export_file.close();
 
     // set direction
-    std::ofstream direction_file(this->pin_path + "/direction");
-    direction_file << (direction == JetsonGPIO::Direction::INPUT ? "in" : "out");
-    direction_file.close();
+    // std::ofstream direction_file(this->pin_path + "/direction");
+    std::string direction_str = (direction == JetsonGPIO::Direction::INPUT ? "in" : "out");
+    command = "echo " + direction_str + " > " + this->pin_path + "/direction";
+    std::cout << command << std::endl;
+    system(command.c_str());
 
     // set initial value
     this->setValue(initial_value);
@@ -60,9 +66,12 @@ JetsonGPIO::JetsonGPIO(int pin, JetsonGPIO::Direction direction, JetsonGPIO::Val
 JetsonGPIO::~JetsonGPIO()
 {
     // unexport pin
-    std::ofstream unexport_file(this->gpio_path + "/unexport");
-    unexport_file << this->pin;
-    unexport_file.close();
+    std::string command = "echo " + std::to_string(this->pin) + " > " + this->gpio_path + "/unexport";
+    std::cout << command << std::endl;
+    system(command.c_str());
+    // std::ofstream unexport_file(this->gpio_path + "/unexport");
+    // unexport_file << this->pin;
+    // unexport_file.close();
 }
 
 JetsonGPIO& JetsonGPIO::operator=(const JetsonGPIO& t)
@@ -77,9 +86,13 @@ JetsonGPIO& JetsonGPIO::operator=(const JetsonGPIO& t)
 
 void JetsonGPIO::setValue(JetsonGPIO::Value value)
 {
-    std::ofstream value_file(this->pin_path + "/value");
-    value_file << value;
-    value_file.close();
+    std::string command = "echo " + std::to_string(value) + " > " + this->pin_path + "/value";
+    std::cout << command << std::endl;
+    system(command.c_str());
+
+    // std::ofstream value_file(this->pin_path + "/value");
+    // value_file << value;
+    // value_file.close();
 }
 
 #endif // __JETSON_GPIO__

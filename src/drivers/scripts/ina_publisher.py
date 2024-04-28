@@ -8,6 +8,7 @@ from time import sleep
 from drivers.libs.adafruit_ina219 import INA219
 from drivers.libs.i2c import I2C
 import cv2
+from functools import partial
 
 class BatteryPublisher(Node):
 
@@ -28,7 +29,7 @@ class BatteryPublisher(Node):
             self.capacity = capacity
             self.i2c_bus = i2c_bus
 
-            self.delta_voltage = self.voltage[0] - self.voltage[1]
+            self.delta_voltage = self.voltage[1] - self.voltage[0]
 
             ina219 = None
             timeout = 5
@@ -56,6 +57,7 @@ class BatteryPublisher(Node):
         battery_config = fs.getNode("sensors").getNode("battery")
         sample_rate = int(battery_config.getNode("sample_rate").real())
         sensors_num = battery_config.getNode("topic").size()
+        self.sensors_num = sensors_num
         topics = [battery_config.getNode("topic").at(i).string() for i in range(sensors_num)]
         battery_types = [battery_config.getNode("type").at(i).string() for i in range(sensors_num)]
         cells = [int(battery_config.getNode("cells").at(i).real()) for i in range(sensors_num)]
@@ -67,47 +69,49 @@ class BatteryPublisher(Node):
         self.batteries = [self.Battery(self.logger, battery_types[i], cells[i], capacities[i], i2c_buses[i]) for i in range(sensors_num)]
 
         # init publishers
-        self.publishers = []
-        self.timers = []
+        self.bat_publishers = []
+        self.bat_timers = []
         for i in range(sensors_num):
-            self.publishers.append(self.create_publisher(BatteryState, topics[i], 10))
-            self.timer.append(self.create_timer(1/sample_rate, lambda msg: self.timer_callback(msg, i)))
+            self.bat_publishers.append(self.create_publisher(BatteryState, topics[i], 10))
+            
+        self.bat_timer = self.create_timer(1/sample_rate, self.timer_callback)
 
         self.logger.info('Battery sensor node launched.')
 
-    def timer_callback(self, msg, idx):
+    def timer_callback(self):
         self.logger.info("Publishing battery data...", once=True)
 
-        battery = self.batteries[idx]
-        
-        bus_voltage = battery.sensor.bus_voltage
-        # shunt_voltage = ina219.shunt_voltage
-        current = battery.sensor.current
-        # power = ina219.power
-        percentage = (bus_voltage - battery.voltage[0]) / battery.delta_voltage
+        for idx in range(self.sensors_num):
+            battery = self.batteries[idx]
+            
+            bus_voltage = battery.sensor.bus_voltage
+            # shunt_voltage = ina219.shunt_voltage
+            current = battery.sensor.current
+            # power = ina219.power
+            percentage = (bus_voltage - battery.voltage[0]) / battery.delta_voltage
 
-        msg = BatteryState()
-        msg.header.stamp = node.get_clock().now().to_msg()
-        msg.voltage = bus_voltage
-        msg.current = current
-        msg.charge = percentage * battery.capacity
-        msg.capacity = battery.capacity
-        msg.design_capacity = battery.capacity
-        msg.percentage = percentage
+            msg = BatteryState()
+            msg.header.stamp = self.get_clock().now().to_msg()
+            msg.voltage = bus_voltage
+            msg.current = current
+            msg.charge = percentage * battery.capacity
+            msg.capacity = battery.capacity
+            msg.design_capacity = battery.capacity
+            msg.percentage = percentage
 
-        msg.power_supply_status = BatteryState.POWER_SUPPLY_STATUS_DISCHARGING
-        msg.power_supply_health = BatteryState.POWER_SUPPLY_HEALTH_GOOD
-        
-        if battery.battery_type == "LIPO":
-            msg.power_supply_technology = BatteryState.POWER_SUPPLY_TECHNOLOGY_LIPO
-        elif battery.battery_type == "LIHV":
-            msg.power_supply_technology = BatteryState.POWER_SUPPLY_TECHNOLOGY_LIHV
-        else:
-            msg.power_supply_technology = BatteryState.POWER_SUPPLY_TECHNOLOGY_UNKNOWN
+            msg.power_supply_status = BatteryState.POWER_SUPPLY_STATUS_DISCHARGING
+            msg.power_supply_health = BatteryState.POWER_SUPPLY_HEALTH_GOOD
+            
+            if battery.battery_type == "LIPO":
+                msg.power_supply_technology = BatteryState.POWER_SUPPLY_TECHNOLOGY_LIPO
+            elif battery.battery_type == "LIHV":
+                msg.power_supply_technology = BatteryState.POWER_SUPPLY_TECHNOLOGY_LIPO
+            else:
+                msg.power_supply_technology = BatteryState.POWER_SUPPLY_TECHNOLOGY_UNKNOWN
 
-        msg.present = True
+            msg.present = True
 
-        self.publishers[i].publish(msg)
+            self.bat_publishers[idx].publish(msg)
 
 if __name__ == "__main__":
     rclpy.init(args=None)

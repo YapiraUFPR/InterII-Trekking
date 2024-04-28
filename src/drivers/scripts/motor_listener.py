@@ -20,7 +20,7 @@ class MotorsListener(Node):
 
         # Load config
         fs = cv2.FileStorage("/home/user/ws/src/config/config.yaml", cv2.FileStorage_READ)
-        motors_config = fs.getNode("motors")
+        motors_config = fs.getNode("actuators").getNode("motors")
         topic = motors_config.getNode("topic").string()
         brake_topic = motors_config.getNode("brake_topic").string()
         self.use_brake = bool(motors_config.getNode("use_brake").real())
@@ -70,10 +70,10 @@ class MotorsListener(Node):
 
         # Convert from rad to degrees
         angle = msg.angular.z * RAD_TO_DEG
-        self.target_angle += angle
+        self.target_angle = angle
         self.target_angle = max(0, min(180, self.target_angle))
 
-        self.target_speed += msg.linear.x
+        self.target_speed = msg.linear.x
         self.target_speed = max(-1, min(1, self.target_speed))
 
     def brake_callback(self, msg: Bool):
@@ -86,22 +86,25 @@ class MotorsListener(Node):
             self.current_speed = 0
             self.current_angle = 90
 
-    def make_simple_profile(self, output, input, slop):
-        if input > output:
-            output = min(input, output + slop)
-        elif input < output:
-            output = max(input, output - slop)
-        return output
+    def make_simple_profile(self, target_speed, curr_speed, step):
+        if curr_speed > target_speed:
+            return current_speed - step
+        elif curr_speed < target_speed:
+            return current_speed + step
+        return current_speed
 
     def speed_profile(self):
 
         while not self.brake:
-            self.current_speed = self.make_simple_profile(self.current_speed, self.target_speed, self.speed_step)
-            self.kit.continuous_servo[self.esc_channel].throttle = self.current_speed
+            self.current_speed = self.make_simple_profile(self.target_speed, self.current_speed, self.speed_step)
+            self.kit.continuous_servo[self.esc_channel].throttle = self.current_speed 
 
-            self.current_angle = self.make_simple_profile(self.current_angle, self.target_angle, self.angle_step)
+            self.current_angle = self.make_simple_profile(self.target_angle, self.current_angle, self.angle_step)
             self.kit.servo[self.servo_channel].angle = self.current_angle
             
+            print(self.current_angle, self.current_speed)
+
+            sleep(0.05)
             rclpy.spin_once(self, timeout_sec=0.05)
 
     def __del__(self):

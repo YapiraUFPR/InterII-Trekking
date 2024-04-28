@@ -27,10 +27,12 @@ sensors:
       height: 480
 
   battery:
-    sample_rate: 0.5
+    sample_rate: 1
     topic: 
-      - /sensors/ina219_0/state # sensors battery
-      - /sensors/ina219_1/state # motors battery
+      # sensors battery
+      - /sensors/ina219_0/state 
+      # motors battery
+      - /sensors/ina219_1/state 
     type: 
       - LIPO
       - LIHV
@@ -57,7 +59,7 @@ actuators:
 
   flare: # led tape
     topic: /flare
-    pin: 18
+    pin: 79
 
   led: # onboard signal leds
     topics: 
@@ -79,7 +81,7 @@ cone_detector:
   sample_rate: 10
   confidence_threshold: 0.6
   error_threshold: 10 # pixels
-  model_path: /home/user/ws/Data/models/yolov5-cone-best.pt
+  model_path: /home/user/ws/Data/models/yolov4.pth
   debug_img: 1
   debug_topic: /cone_detector/debug_image
 
@@ -98,8 +100,22 @@ visual_pid:
   confidence_threshold: 0.6
   error_threshold: 10 # pixels
 
+steering:
+  odometry_topic: /ov_msckf/loop_pose
+  map_topic: /steering/map
+  map_file: /home/user/ws/Data/maps/track.txt
+  mark_color_lower:
+    - 0
+    - 0
+    - 0
+  mark_color_upper:
+    - 255
+    - 255
+    - 255
+
 visualization_node:
   topics:
+    - /steering/map
     # - /fake_pose
     # - /ov_msckf/posegt
-    - /ov_msckf/loop_pose
+    # - /ov_msckf/loop_pose

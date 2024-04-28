@@ -50,6 +50,7 @@ class Tcs32Publisher(Node):
         rgb = self.tcs.read()
         
         msg = ColorRGBA()
+        msg.header.stamp = self.get_clock().now().to_msg()
         msg.r = (rgb[0])
         msg.g = (rgb[1])
         msg.b = (rgb[2])
