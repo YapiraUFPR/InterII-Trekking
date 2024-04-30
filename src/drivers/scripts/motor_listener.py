@@ -105,7 +105,7 @@ class MotorsListener(Node):
 
                 print("angle")
                 self.current_angle = self.make_simple_profile(self.target_angle, self.current_angle, self.angle_step)
-                self.kit.servo[self.servo_channel].angle = self.current_angle
+                self.kit.servo[self.servo_channel].angle = min(self.current_angle + 15, 180)
                 
                 print(self.current_angle, self.current_speed)
 

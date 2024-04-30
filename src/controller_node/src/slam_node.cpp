@@ -49,6 +49,11 @@ private:
     // PID controll
     double current_angular_speed;
     double current_robot_angle;
+    double current_robot_distance;
+
+    double ignore_first_mark;
+
+    double ang_accel_min;
 
     // Motors controll
     double current_angle;
@@ -77,17 +82,21 @@ private:
     {
         // RCLCPP_INFO(this->get_logger(), "Received IMU message: x=%f, y=%f, z=%f", msg->orientation.x, msg->orientation.y, msg->orientation.z);
 
-        this->imu_pid(msg);
-    }
-
-    void imu_pid(const sensor_msgs::msg::Imu::SharedPtr msg)
-    {
-        // Follow a straight line
-
         double accel_ang_z = msg->angular_velocity.z;
 
+        // High pass filter
+        accel_ang_z = (abs(accel_ang_z) < this->ang_accel_min) ? 0.0 : accel_ang_z;
+
         this->current_angular_speed += accel_ang_z * this->DELTA_T;
-        this->current_robot_angle += this->current_angular_speed * this->DELTA_T;
+        this->current_robot_angle += accel_ang_z * this->DELTA_T;
+
+        this->current_robot_distance += msg->linear_acceleration.x * this->DELTA_T * this->DELTA_T;
+
+        this->imu_pid();
+    }
+
+    void imu_pid(void)
+    {
 
         if (this->current_robot_angle > this->MAX_ANGLE)
             this->current_robot_angle = this->MAX_ANGLE;
@@ -100,7 +109,7 @@ private:
 
         if (++counter == 30)
         {
-            RCLCPP_INFO(this->get_logger(), "Current accel ang z: %f, Current ang speed: %f, Current angle: %f, Control %f", accel_ang_z, this->current_angular_speed, this->current_robot_angle, control);
+            RCLCPP_INFO(this->get_logger(), "Current ang speed: %f, Current angle: %f, Control %f, Linear distance: %f", this->current_angular_speed, this->current_robot_angle, control, this->current_robot_distance);
 
         }
 
@@ -113,6 +122,9 @@ private:
     void color_callback(const std_msgs::msg::ColorRGBA::SharedPtr msg)
     {
         RCLCPP_INFO(this->get_logger(), "Received color message: r=%f, g=%f, b=%f, a=%f", msg->r, msg->g, msg->b, msg->a);
+
+        if (this->current_robot_distance < this->ignore_first_mark)
+            return;
 
         this->found_mark = (msg->r >= this->mark_color_lower[0] && msg->r <= this->mark_color_upper[0]) &&
                           (msg->g >= this->mark_color_lower[1] && msg->g <= this->mark_color_upper[1]) &&
@@ -187,7 +199,9 @@ public:
         fs["slam"]["pid"]["ki"] >> ki;
 
         fs["slam"]["ignore_first_n"] >> this->ignore_first_n;
+        fs["slam"]["ignore_first_mark"] >> this->ignore_first_mark;
         fs["slam"]["linear_speed"] >> this->linear_speed;
+        fs["slam"]["ang_accel_min"] >> this->ang_accel_min;
 
         fs.release();
 
@@ -238,6 +252,8 @@ public:
                 case robot_state::SECOND_MARK:
                     RCLCPP_INFO(this->get_logger(), "Reached second mark. Exiting...");
                     this->set_speed(this->NEUTRAL_ANGLE, 0.0);
+                    sleep(5);
+                    this->set_flare(false);
                     exit = true;
                     break;
             }

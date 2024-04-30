@@ -59,8 +59,8 @@ actuators:
 
   flare: # led tape
     topic: /flare
-    # pin: 79
-    pin: 12
+    pin: 18
+    # pin: 12
 
   led: # onboard signal leds
     topics: 
@@ -106,29 +106,31 @@ steering:
   map_topic: /steering/map
   map_file: /home/user/ws/Data/maps/track.txt
   mark_color_lower:
-    - 0
-    - 0
-    - 0
+    - 3200
+    - 3200
+    - 2000
   mark_color_upper:
-    - 255
-    - 255
-    - 255
+    - 4200
+    - 4200
+    - 3500
 
 slam:
   mark_color_lower:
-    - 0
-    - 0
-    - 0
+    - 3200
+    - 3200
+    - 2000
   mark_color_upper:
-    - 255
-    - 255
-    - 255
+    - 4200
+    - 4200
+    - 3500
   pid:
-    kp: 0.0013
+    kp: 0.15
     ki: 0.0
     kd: 0.001
   ignore_first_n: 50
-  linear_speed: 0.22
+  linear_speed: 0.16
+  ignore_first_mark: 5.0
+  ang_accel_min: 0.001
 
 pose_logger:
   topic: /ov_msckf/loop_pose
