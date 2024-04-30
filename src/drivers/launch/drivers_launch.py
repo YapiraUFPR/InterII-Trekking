@@ -6,7 +6,7 @@ from launch_ros.actions import Node
 
 launch_args = [
     DeclareLaunchArgument(
-        name="camera_enable", default_value="true", description="enable camera node"
+        name="camera_enable", default_value="false", description="enable camera node"
     ),
     DeclareLaunchArgument(
         name="imu_enable", default_value="true", description="enable IMU node"
@@ -15,13 +15,16 @@ launch_args = [
         name="status_led_enable", default_value="false", description="enable led node"
     ),
     DeclareLaunchArgument(
+        name="flare_enable", default_value="true", description="enable flare node"
+    ),
+    DeclareLaunchArgument(
         name="dist_sensor_enable", default_value="false", description="enable distance sensor node"
     ),
     DeclareLaunchArgument(
         name="bat_monitor_enable", default_value="false", description="enable battery monitor node"
     ),
     DeclareLaunchArgument(
-        name="color_sensor_enable", default_value="false", description="enable color sensor node"
+        name="color_sensor_enable", default_value="true", description="enable color sensor node"
     ),
     DeclareLaunchArgument(
         name="motor_enable", default_value="false", description="enable motor node"
@@ -39,6 +42,11 @@ def launch_setup(context):
             package='drivers',
             condition=IfCondition(LaunchConfiguration("status_led_enable")),
             executable='led_listener',
+        ),
+        Node(
+            package='drivers',
+            condition=IfCondition(LaunchConfiguration("flare_enable")),
+            executable='flare_listener.py'
         ),
         Node(
             package='drivers',

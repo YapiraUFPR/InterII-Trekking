@@ -68,13 +68,14 @@ class MotorsListener(Node):
         if self.brake:
             return
 
-        # Convert from rad to degrees
         angle = msg.angular.z * RAD_TO_DEG
+
+        # Convert from rad to degrees
         self.target_angle = angle
-        self.target_angle = max(0, min(180, self.target_angle))
+        self.target_angle = max(10, min(170, self.target_angle))
 
         self.target_speed = msg.linear.x
-        self.target_speed = max(-1, min(1, self.target_speed))
+        self.target_speed = max(-0.7, min(0.7, self.target_speed))
 
     def brake_callback(self, msg: Bool):
         self.logger.info("Received brake signal...")
@@ -96,19 +97,25 @@ class MotorsListener(Node):
 
     def speed_profile(self):
 
-        while not self.brake:
-            print("speed")
-            self.current_speed = self.make_simple_profile(self.target_speed, self.current_speed, self.speed_step)
-            self.kit.continuous_servo[self.esc_channel].throttle = self.current_speed 
+        try: 
+            while not self.brake and rclpy.ok():
+                print("speed")
+                self.current_speed = self.make_simple_profile(self.target_speed, self.current_speed, self.speed_step)
+                self.kit.continuous_servo[self.esc_channel].throttle = self.current_speed 
 
-            print("angle")
-            self.current_angle = self.make_simple_profile(self.target_angle, self.current_angle, self.angle_step)
-            self.kit.servo[self.servo_channel].angle = self.current_angle
-            
-            print(self.current_angle, self.current_speed)
+                print("angle")
+                self.current_angle = self.make_simple_profile(self.target_angle, self.current_angle, self.angle_step)
+                self.kit.servo[self.servo_channel].angle = self.current_angle
+                
+                print(self.current_angle, self.current_speed)
 
-            sleep(0.05)
-            rclpy.spin_once(self, timeout_sec=0.05)
+                sleep(0.001)
+                rclpy.spin_once(self, timeout_sec=0.05)
+        except KeyboardInterrupt:
+            self.kit.servo[self.servo_channel].angle = 90
+            self.kit.continuous_servo[self.esc_channel].throttle = 0
+            print("Keyboard interrupt detected.")
+            return
 
     def __del__(self):
         self.kit.continuous_servo[self.esc_channel].throttle = 0

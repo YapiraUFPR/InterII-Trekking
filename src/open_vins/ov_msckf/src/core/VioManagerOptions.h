@@ -162,6 +162,8 @@ struct VioManagerOptions {
       parser->parse_external("relative_config_imu", "imu0", "accelerometer_random_walk", imu_noises.sigma_ab);
     }
     imu_noises.print();
+    printf("finished imu noise\n");
+    fflush(stdout);
     if (parser != nullptr) {
       parser->parse_config("up_msckf_sigma_px", msckf_options.sigma_pix);
       parser->parse_config("up_msckf_chi2_multipler", msckf_options.chi2_multipler);

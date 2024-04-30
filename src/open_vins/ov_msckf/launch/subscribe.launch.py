@@ -8,7 +8,7 @@ import os
 import sys
 
 launch_args = [
-    DeclareLaunchArgument(name="namespace", default_value="ov_msckf", description="namespace"),
+    DeclareLaunchArgument(name="namespace", default_value="interII", description="namespace"),
     DeclareLaunchArgument(
         name="ov_enable", default_value="true", description="enable OpenVINS node"
     ),
@@ -17,7 +17,7 @@ launch_args = [
     ),
     DeclareLaunchArgument(
         name="config",
-        default_value="euroc_mav",
+        default_value="interII",
         description="euroc_mav, tum_vi, rpng_aruco...",
     ),
     DeclareLaunchArgument(
@@ -32,12 +32,12 @@ launch_args = [
     ),
     DeclareLaunchArgument(
         name="use_stereo",
-        default_value="true",
+        default_value="false",
         description="if we have more than 1 camera, if we should try to track stereo constraints between pairs",
     ),
     DeclareLaunchArgument(
         name="max_cameras",
-        default_value="2",
+        default_value="1",
         description="how many cameras we have 1 = mono, 2 = stereo, >2 = binocular (all mono tracking)",
     ),
     DeclareLaunchArgument(

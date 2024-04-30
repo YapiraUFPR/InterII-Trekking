@@ -71,11 +71,11 @@ class BnoPublisher(Node):
         # imu_msg.orientation.w = quat_real
         # imu_msg.orientation_covariance[0] = -1
 
-        # gyro_x, gyro_y, gyro_z = self.bno.gyro
-        # imu_msg.angular_velocity.x = gyro_x
-        # imu_msg.angular_velocity.y = gyro_y
-        # imu_msg.angular_velocity.z = gyro_z
-        # imu_msg.angular_velocity_covariance[0] = -1
+        gyro_x, gyro_y, gyro_z = self.bno.gyro
+        imu_msg.angular_velocity.x = gyro_x
+        imu_msg.angular_velocity.y = gyro_y
+        imu_msg.angular_velocity.z = gyro_z
+        imu_msg.angular_velocity_covariance[0] = -1
 
         accel_x, accel_y, accel_z = self.bno.acceleration
         imu_msg.linear_acceleration.x = accel_x

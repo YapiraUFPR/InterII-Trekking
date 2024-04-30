@@ -36,6 +36,7 @@ public:
         videoOptions video_options;
         video_options.width = resolution[0];
         video_options.height = resolution[1];
+        video_options.frameRate = static_cast<float>(sample_rate);
         // In our current setup, the camera is upside down.
         video_options.flipMethod = videoOptions::FlipMethod::FLIP_ROTATE_180;
         video_options.latency = 1;
@@ -63,11 +64,13 @@ private:
         sensor_msgs::msg::Image msg;
         imageConverter::PixelType* nextFrame = NULL;
 
-        if(!this->cap->Capture(&nextFrame, 1000) )
+        if(!this->cap->Capture(&nextFrame, 1000))
         {
             RCLCPP_ERROR(this->get_logger(), "Failed to capture camera frame.");
             return;
         }
+
+
 
         if(!this->image_cvt->Resize(this->cap->GetWidth(), this->cap->GetHeight(), imageConverter::ROSOutputFormat))
         {
@@ -76,6 +79,7 @@ private:
         }
 
         this->image_cvt->Convert(msg, imageConverter::ROSOutputFormat, nextFrame);
+
 
         RCLCPP_INFO_ONCE(this->get_logger(), "Publishing camera frames...");
 

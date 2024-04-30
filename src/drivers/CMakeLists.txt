@@ -65,6 +65,7 @@ install(PROGRAMS
   scripts/vl5_publisher.py
   scripts/tcs34_publisher.py
   scripts/motor_listener.py
+  scripts/flare_listener.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

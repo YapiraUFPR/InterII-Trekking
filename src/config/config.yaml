@@ -34,14 +34,14 @@ sensors:
       # motors battery
       - /sensors/ina219_1/state 
     type: 
-      - LIPO
       - LIHV
+      - LIPO
     cells: 
-      - 2
       - 3
+      - 2
     capacity: 
-      - 1800 # mAh
       - 2300 # mAh
+      - 1800 # mAh
     bus:
       - 1
       - 0
@@ -54,12 +54,13 @@ actuators:
     esc_channel: 0
     servo_channel: 1
     max_speed: 30
-    angle_step: 0.05
-    speed_step: 1 # degrees
+    angle_step: 5 # degrees
+    speed_step: 0.05 
 
   flare: # led tape
     topic: /flare
-    pin: 79
+    # pin: 79
+    pin: 12
 
   led: # onboard signal leds
     topics: 
@@ -81,7 +82,7 @@ cone_detector:
   sample_rate: 10
   confidence_threshold: 0.6
   error_threshold: 10 # pixels
-  model_path: /home/user/ws/Data/models/yolov4.pth
+  model_path: /home/user/ws/Data/models/Yolov4_cones_epoch20.pth
   debug_img: 1
   debug_topic: /cone_detector/debug_image
 
@@ -113,6 +114,22 @@ steering:
     - 255
     - 255
 
+slam:
+  mark_color_lower:
+    - 0
+    - 0
+    - 0
+  mark_color_upper:
+    - 255
+    - 255
+    - 255
+  pid:
+    kp: 0.0013
+    ki: 0.0
+    kd: 0.001
+  ignore_first_n: 50
+  linear_speed: 0.22
+
 pose_logger:
   topic: /ov_msckf/loop_pose
   output_file: /home/user/ws/Data/maps/track.txt
@@ -120,7 +137,7 @@ pose_logger:
 
 visualization_node:
   topics:
-    - /steering/map
+    # - /steering/map
     # - /fake_pose
     # - /ov_msckf/posegt
-    # - /ov_msckf/loop_pose
+    - /interII/loop_pose

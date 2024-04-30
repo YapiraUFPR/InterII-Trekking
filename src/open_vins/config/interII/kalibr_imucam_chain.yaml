@@ -2,14 +2,14 @@
 
 cam0:
   T_imu_cam: #rotation from camera to IMU R_CtoI, position of camera in IMU p_CinI
-    - [1.0, 0.0, 0.0, 1.0]
-    - [0.0, 1.0, 0.0, 1.0]
-    - [0.0, 0.0, 1.0, 1.0]
-    - [0.0, 0.0, 0.0, 1.0]
+    - [ 0.99255, -0.0,  0.12187]
+    - [ 0.0, -1.0, -0.0]
+    - [ 0.12187,  0.0, -0.99255]
+
   cam_overlaps: []
   camera_model: pinhole
   distortion_coeffs: [-0.320021, 0.095541, -0.000691, 0.000255, 0.000000]
   distortion_model: radtan
   intrinsics: [392.413342, 523.374307, 317.985862, 285.643448] #fu, fv, cu, cv
-  resolution: [640, 640]
-  rostopic: /senors/imx/image_raw
+  resolution: [640, 480]
+  rostopic: /sensors/imx/image_raw

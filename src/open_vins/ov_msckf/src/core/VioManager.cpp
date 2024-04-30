@@ -161,6 +161,8 @@ VioManager::VioManager(VioManagerOptions &params_) : thread_init_running(false),
                                                         propagator, params.gravity_mag, params.zupt_max_velocity,
                                                         params.zupt_noise_multiplier, params.zupt_max_disparity);
   }
+
+  std::cout << "finished initialization" << std::endl;
 }
 
 void VioManager::feed_measurement_imu(const ov_core::ImuData &message) {

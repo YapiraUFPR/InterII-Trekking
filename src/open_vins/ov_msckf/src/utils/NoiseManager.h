@@ -61,6 +61,8 @@ struct NoiseManager {
   void print() {
     PRINT_DEBUG("  - gyroscope_noise_density: %.6f\n", sigma_w);
     PRINT_DEBUG("  - accelerometer_noise_density: %.5f\n", sigma_a);
+    printf("finished print accel noise density\n");
+    fflush(stdout);
     PRINT_DEBUG("  - gyroscope_random_walk: %.7f\n", sigma_wb);
     PRINT_DEBUG("  - accelerometer_random_walk: %.6f\n", sigma_ab);
   }

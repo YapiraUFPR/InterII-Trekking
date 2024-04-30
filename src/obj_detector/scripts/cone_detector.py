@@ -4,7 +4,7 @@ import rclpy
 from rclpy.node import Node
 
 from sensor_msgs.msg import Image
-from vision_msgs.msg import Detection2D
+from vision_msgs.msg import Detection2DArray
 
 from cv_bridge import CvBridge
 
@@ -51,7 +51,6 @@ class ConeDetector(Node):
             pretrained_dict = torch.load(model_path, map_location=device)
             self.model.load_state_dict(pretrained_dict)
             self.model.cuda()
-            self.model.eval()
 
             self.logger.info("Model loaded successfully.")
     
@@ -70,10 +69,12 @@ class ConeDetector(Node):
         def timer_callback(self):
             # Detect cone
             if self.current_image is not None:
+                self.logger.info("Running inference...")
                 inference_results = do_detect(self.model, self.current_image, 0.5, 1, 0.4, True)
     
                 # Get bounding box and center
                 if len(inference_results) > 0:
+                    self.logger.info("Found cone in image.")
                     box = inference_results.xyxy[0].numpy()
                     x1, y1, x2, y2, conf, obj_cls = box
 
@@ -115,9 +116,12 @@ class ConeDetector(Node):
                     detection.results.pose.position.x = error
 
                     self.detection_publisher.publish(detection)
+                else:
+                    self.logger.info("No cone detected.")
 
         def image_callback(self, msg):
             # Convert ROS Image to OpenCV Image
+            self.logger.info("Receiving camera images...", once=True)
             self.current_image_msg = msg
             self.current_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
 
