@@ -31,6 +31,7 @@ public:
         fs["sensors"]["camera"]["sample_rate"] >> sample_rate;
         fs["sensors"]["camera"]["input_stream"] >> input_stream;
         fs["sensors"]["camera"]["resolution"] >> resolution;
+        fs["sensors"]["camera"]["imu_sync"] >> this.imu_sync;
         fs.release();
 
         videoOptions video_options;
@@ -70,8 +71,6 @@ private:
             return;
         }
 
-
-
         if(!this->image_cvt->Resize(this->cap->GetWidth(), this->cap->GetHeight(), imageConverter::ROSOutputFormat))
         {
             RCLCPP_ERROR(this->get_logger(), "Failed to resize camera image converter.");
@@ -89,6 +88,7 @@ private:
 
     videoSource* cap; 
     imageConverter* image_cvt;
+    bool imu_sync;
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr publisher;
     rclcpp::TimerBase::SharedPtr timer;
 };

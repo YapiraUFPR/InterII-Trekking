@@ -93,7 +93,7 @@ RUN wget http://ceres-solver.org/ceres-solver-1.14.0.tar.gz \
     && tar -xf ceres-solver-1.14.0.tar.gz \
     && mkdir ceres-bin \
     && cd ceres-bin \
-    && cmake ../ceres-solver-1.14.0 \
+    && cmake ../ceres-solver-1.14.0 -DUSE_CUDA=ON \
     && make -j3 \
     && make install
 

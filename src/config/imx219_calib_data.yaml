@@ -1,0 +1,16 @@
+%YAML:1.0
+---
+model_type: PINHOLE
+camera_name: imx219
+image_width: 640
+image_height: 480
+distortion_parameters:
+   k1: -0.320021
+   k2: 0.095541
+   p1: -0.000691
+   p2: 0.000255
+projection_parameters:
+   fx: 392.413342
+   fy: 523.374307
+   cx: 317.985862
+   cy: 285.643448

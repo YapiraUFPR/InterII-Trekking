@@ -1,1 +1,1 @@
-docker run --rm --name foxglove-bridge --privileged --network="host" foxglove/bridge:ros2
+docker run --rm --name foxglove-bridge --privileged --network="host" --stop-signal SIGINT --stop-timeout 10 foxglove/bridge:ros2

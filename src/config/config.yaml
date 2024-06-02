@@ -22,6 +22,7 @@ sensors:
     topic: /sensors/imx/image_raw
     sample_rate: 30 # is also framerate
     input_stream: csi://0
+    imu_sync: 1
     resolution:
       width: 640
       height: 480
@@ -107,7 +108,7 @@ steering:
   map_file: /home/user/ws/Data/maps/track.txt
   mark_color_lower:
     - 3200
-    - 3200
+    - 4000
     - 2000
   mark_color_upper:
     - 4200
@@ -116,13 +117,13 @@ steering:
 
 slam:
   mark_color_lower:
-    - 3200
-    - 3200
-    - 2000
+    - 800
+    - 4000
+    - 4000
   mark_color_upper:
-    - 4200
-    - 4200
-    - 3500
+    - 2000
+    - 5000
+    - 5000
   pid:
     kp: 0.15
     ki: 0.0
