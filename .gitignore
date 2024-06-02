@@ -1,3 +1,6 @@
+*.jpg
+*.png
+
 ros-foxglove-bridge
 .git-old
 

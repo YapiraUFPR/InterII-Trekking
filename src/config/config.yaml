@@ -134,13 +134,11 @@ slam:
   ang_accel_min: 0.001
 
 pose_logger:
-  topic: /ov_msckf/loop_pose
+  topic: /vins_fusion/imu_propagate
   output_file: /home/user/ws/Data/maps/track.txt
   skip_poses: 50
 
 visualization_node:
   topics:
     # - /steering/map
-    # - /fake_pose
-    # - /ov_msckf/posegt
-    - /interII/loop_pose
+    - /vins_fusion/imu_propagate

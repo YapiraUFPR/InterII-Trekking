@@ -141,22 +141,6 @@ void vio_callback(const nav_msgs::msg::Odometry::SharedPtr pose_msg)
     pub_global_odometry->publish(odometry);
     pub_global_path->publish(*global_path);
     publish_car_model(t, global_t, global_q);
-
-
-    // write result to file
-    std::ofstream foutC("/home/tony-ws1/output/vio_global.csv", ios::app);
-    foutC.setf(ios::fixed, ios::floatfield);
-    foutC.precision(0);
-    foutC << pose_msg->header.stamp.sec * 1e9 << ",";
-    foutC.precision(5);
-    foutC << global_t.x() << ","
-            << global_t.y() << ","
-            << global_t.z() << ","
-            << global_q.w() << ","
-            << global_q.x() << ","
-            << global_q.y() << ","
-            << global_q.z() << endl;
-    foutC.close();
 }
 
 
