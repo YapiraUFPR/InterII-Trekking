@@ -22,9 +22,9 @@ public:
         fs["pose_logger"]["skip_poses"] >> this->skip_poses;
 
         pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            pose_topic_, 10, std::bind(&PoseLogger::pose_callback, this, std::placeholders::_1));
+            pose_topic, 10, std::bind(&PoseLogger::pose_callback, this, std::placeholders::_1));
 
-        this->output_file = ofstream(output_path, std::ios_base::app);
+        this->output_file = std::ofstream(output_path, std::ios_base::app);
         if (!this->output_file.is_open()) {
             RCLCPP_ERROR(this->get_logger(), "Could not open output file %s", output_path.c_str());
             exit(1);
@@ -42,11 +42,12 @@ private:
             return;
         }
 
-        this->file << msg->pose.position.x << " " << msg->pose.position.y << " " << msg->pose.position.z << std::endl;
+        this->output_file << msg->pose.position.x << " " << msg->pose.position.y << " " << msg->pose.position.z << std::endl;
     }
 
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_subscriber_;
     int skip_poses, pose_counter;
+    std::ofstream output_file;
 };
 
 int main(int argc, char * argv[])
