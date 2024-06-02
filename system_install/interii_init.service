@@ -1,0 +1,10 @@
+[Unit]
+Description=Robot initialization.
+
+[Service]
+Type=simple
+ExecStart=/home/nvidia/bedman-trekker/system_install/interii_init.sh
+ExecStop=bash -c 'docker stop $(docker ps -a -q)'
+
+[Install]
+WantedBy=multi-user.target
