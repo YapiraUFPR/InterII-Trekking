@@ -78,30 +78,6 @@ actuators:
         - 78
         - 194
 
-cone_detector:
-  topic: /cone_detector/detections
-  sample_rate: 10
-  confidence_threshold: 0.6
-  error_threshold: 10 # pixels
-  model_path: /home/user/ws/Data/models/Yolov4_cones_epoch20.pth
-  debug_img: 1
-  debug_topic: /cone_detector/debug_image
-
-mapper:
-  node: mapper
-  topic: /mapper/map
-  sample_rate: 100
-  seg_pts_num: 100
-
-visual_pid:
-  node: visual_pid
-  topic: /visual_pid/cmd_vel
-  show_topic: /visual_pid/debug_image
-  sample_rate: 20
-  correction: 5 # degrees
-  confidence_threshold: 0.6
-  error_threshold: 10 # pixels
-
 steering:
   odometry_topic: /ov_msckf/loop_pose
   map_topic: /steering/map
@@ -114,24 +90,6 @@ steering:
     - 4200
     - 4200
     - 3500
-
-slam:
-  mark_color_lower:
-    - 800
-    - 4000
-    - 4000
-  mark_color_upper:
-    - 2000
-    - 5000
-    - 5000
-  pid:
-    kp: 0.15
-    ki: 0.0
-    kd: 0.001
-  ignore_first_n: 50
-  linear_speed: 0.16
-  ignore_first_mark: 5.0
-  ang_accel_min: 0.001
 
 pose_logger:
   topic: /vins_fusion/imu_propagate

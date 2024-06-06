@@ -9,7 +9,7 @@
 class PoseLogger : public rclcpp::Node
 {
 public:
-    PoseLogger(const std::string& output_file, const std::string& pose_topic) : Node("pose_logger")
+    PoseLogger() : Node("pose_logger")
     {
         RCLCPP_INFO(this->get_logger(), "Starting pose logger...");
 

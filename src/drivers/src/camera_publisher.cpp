@@ -31,7 +31,7 @@ public:
         fs["sensors"]["camera"]["sample_rate"] >> sample_rate;
         fs["sensors"]["camera"]["input_stream"] >> input_stream;
         fs["sensors"]["camera"]["resolution"] >> resolution;
-        fs["sensors"]["camera"]["imu_sync"] >> this.imu_sync;
+        fs["sensors"]["camera"]["imu_sync"] >> this->imu_sync;
         fs.release();
 
         videoOptions video_options;

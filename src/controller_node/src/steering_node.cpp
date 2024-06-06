@@ -50,6 +50,7 @@ private:
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr map_pub;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr flare_pub;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr motors_pub;
+    std::vector<rclcpp::Publisher<std_msgs::msg::ColorRGBA>::SharedPtr> leds_pub;
 
     std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> executor;
 
@@ -170,6 +171,21 @@ private:
         this->motors_pub->publish(msg);
     }
 
+    void setLeds(std::vector<int> color, std::vector<int> color2)
+    {
+        std_msgs::msg::ColorRGBA msg;
+        msg.r = color[0];
+        msg.g = color[1];
+        msg.b = color[2];
+        msg.a = 1.0;
+        this->leds_pub[0]->publish(msg);
+
+        msg.r = color2[0];
+        msg.g = color2[1];
+        msg.b = color2[2];
+        this->leds_pub[0]->publish(msg);
+    }
+
 public:
 
     SteeringNode(void) : Node("steering_node") 
@@ -180,6 +196,7 @@ public:
         std::string odometry_topic, color_topic; // Subscribers
         std::string map_topic, flare_topic, motors_topic; // Publishers
         std::string map_file;
+        std::vector <std::string> led_topics;
         std::vector<int> mark_colors(3);
         cv::FileStorage fs("/home/user/ws/src/config/config.yaml", cv::FileStorage::READ);
         fs["steering"]["odometry_topic"] >> odometry_topic;
@@ -190,6 +207,13 @@ public:
         fs["actuators"]["motors"]["topic"] >> motors_topic;
         fs["steering"]["mark_color_lower"] >> mark_color_lower;
         fs["steering"]["mark_color_upper"] >> mark_color_upper;
+        for (size_t i = 0; i < fs["actuators"]["led"]["topics"].size(); i++)
+        {
+            std::string led_topic;
+            fs["actuators"]["led"]["topics"][i] >> led_topic;
+            led_topics.push_back(led_topic);
+        }
+
         fs.release();
 
         // Create subscribers
@@ -200,6 +224,10 @@ public:
         this->map_pub = this->create_publisher<nav_msgs::msg::Odometry>(map_topic, 10);
         this->flare_pub = this->create_publisher<std_msgs::msg::Bool>(flare_topic, 10);
         this->motors_pub = this->create_publisher<geometry_msgs::msg::Twist>(motors_topic, 10);
+        for (std::string led_topic : led_topics)
+        {
+            this->leds_pub.push_back(this->create_publisher<std_msgs::msg::ColorRGBA>(led_topic, 10));
+        }
 
         // Load map
         RCLCPP_INFO(this->get_logger(), "Loading map from %s", map_file.c_str());
@@ -237,10 +265,12 @@ public:
             switch (this->ROBOT_STATE)
             {
                 case robot_state::FIRST_MARK:
+                    this->setLeds([0, 1, 0], [0, 1, 0]);
                     RCLCPP_INFO(this->get_logger(), "Currently at first mark. Will begin navigation to second mark..");
                     this->ROBOT_STATE = robot_state::NAVIGATING;
                     break;
                 case robot_state::NAVIGATING:
+                    this->setLeds([0, 1, 1], [0, 1, 1]);
                     RCLCPP_INFO(this->get_logger(), "Navigating...");
                     this->set_speed(this->NEUTRAL_ANGLE, this->LINEAR_SPEED);
                     while (!this->found_mark)
@@ -250,6 +280,7 @@ public:
                     this->ROBOT_STATE = robot_state::SECOND_MARK;
                     break;
                 case robot_state::SECOND_MARK:
+                    this->setLeds([0, 1, 0], [0, 0, 0]);
                     RCLCPP_INFO(this->get_logger(), "Reached second mark. Exiting...");
                     this->set_speed(this->NEUTRAL_ANGLE, 0.0);
                     exit = true;
