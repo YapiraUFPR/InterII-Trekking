@@ -76,7 +76,7 @@ actuators:
         - 27 
       blue:
         - 21
-        - 22
+        - -1 # should be 22, but for mysterious reasons it doesnt work
 
 steering:
   odometry_topic: /ov_msckf/loop_pose

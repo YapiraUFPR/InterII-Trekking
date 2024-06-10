@@ -13,20 +13,26 @@ class Led
 public:
     Led(int red_pin, int green_pin, int blue_pin)
     {
-        GPIO::setup(red_pin, GPIO::OUT, GPIO::HIGH);
-        GPIO::setup(green_pin, GPIO::OUT, GPIO::HIGH);
-        GPIO::setup(blue_pin, GPIO::OUT, GPIO::HIGH);
+        if (red_pin != -1)
+            GPIO::setup(red_pin, GPIO::OUT, GPIO::HIGH);
+        if (green_pin != -1)
+            GPIO::setup(green_pin, GPIO::OUT, GPIO::HIGH);
+        if (blue_pin != -1)
+            GPIO::setup(blue_pin, GPIO::OUT, GPIO::HIGH);
 
-        this->red = red;
-        this->green = green;
-        this->blue = blue;
+        this->red = red_pin;
+        this->green = green_pin;
+        this->blue = blue_pin;
     }
 
     void setColor(bool r, bool g, bool b)
     {
-        GPIO::output(this->red, r ? GPIO::LOW : GPIO::HIGH);
-        GPIO::output(this->green, g ? GPIO::LOW : GPIO::HIGH);
-        GPIO::output(this->blue, b ? GPIO::LOW : GPIO::HIGH);
+        if (this->red != -1)
+            GPIO::output(this->red, r ? GPIO::LOW : GPIO::HIGH);
+        if (this->green != -1)
+            GPIO::output(this->green, g ? GPIO::LOW : GPIO::HIGH);
+        if (this->blue != -1)
+            GPIO::output(this->blue, b ? GPIO::LOW : GPIO::HIGH);
     }
 
 private:
@@ -76,6 +82,11 @@ public:
         }
 
         RCLCPP_INFO(this->get_logger(), "LED listener has been started.");
+    }
+
+    ~LedListener()
+    {
+        GPIO::cleanup();
     }
 
 private:

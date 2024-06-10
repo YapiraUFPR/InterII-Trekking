@@ -12,7 +12,7 @@ launch_args = [
         name="imu_enable", default_value="true", description="enable IMU node"
     ),
     DeclareLaunchArgument(
-        name="status_led_enable", default_value="false", description="enable led node"
+        name="status_led_enable", default_value="true", description="enable led node"
     ),
     DeclareLaunchArgument(
         name="flare_enable", default_value="false", description="enable flare node"

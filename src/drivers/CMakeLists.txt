@@ -64,7 +64,7 @@ install(PROGRAMS
   scripts/bno_publisher.py
   scripts/ina_publisher.py
   scripts/vl5_publisher.py
-  scripts/tcs34_publisher.py
+  scripts/tcs32_publisher.py
   scripts/motor_listener.py
   scripts/flare_listener.py
   DESTINATION lib/${PROJECT_NAME}
