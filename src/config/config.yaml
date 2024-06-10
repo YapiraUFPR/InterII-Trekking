@@ -69,14 +69,14 @@ actuators:
       - /led_2
     pins:
       red: # linux gpio notation
-        - 51
-        - 50
+        - 16
+        - 17
       green:
-        - 77
-        - 14 
+        - 20
+        - 27 
       blue:
-        - 78
-        - 194
+        - 21
+        - 22
 
 steering:
   odometry_topic: /ov_msckf/loop_pose

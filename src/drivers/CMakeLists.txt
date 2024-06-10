@@ -30,6 +30,7 @@ find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
 find_package(jetson-utils REQUIRED)
+find_package(JetsonGPIO REQUIRED)
 
 # camera_publisher
 add_executable(camera_publisher src/camera_publisher.cpp src/image_converter.cpp src/ros_compat.cpp) 
@@ -42,7 +43,7 @@ install(TARGETS
 # led_listener
 add_executable(led_listener src/led_listener.cpp)
 ament_target_dependencies(led_listener rclcpp std_msgs OpenCV)
-target_link_libraries( led_listener ${OpenCV_LIBS} )
+target_link_libraries( led_listener ${OpenCV_LIBS} JetsonGPIO::JetsonGPIO )
 install(TARGETS
   led_listener
   DESTINATION lib/${PROJECT_NAME})

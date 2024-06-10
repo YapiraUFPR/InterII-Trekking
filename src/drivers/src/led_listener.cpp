@@ -6,29 +6,33 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/color_rgba.hpp"
 
-#include "jetson_gpio.hpp"
+#include <JetsonGPIO.h>
 
 class Led
 {
 public:
     Led(int red_pin, int green_pin, int blue_pin)
     {
-        this->red = JetsonGPIO(red_pin, JetsonGPIO::OUTPUT, JetsonGPIO::HIGH);
-        this->green = JetsonGPIO(green_pin, JetsonGPIO::OUTPUT, JetsonGPIO::HIGH);
-        this->blue = JetsonGPIO(blue_pin, JetsonGPIO::OUTPUT, JetsonGPIO::HIGH);
+        GPIO::setup(red_pin, GPIO::OUT, GPIO::HIGH);
+        GPIO::setup(green_pin, GPIO::OUT, GPIO::HIGH);
+        GPIO::setup(blue_pin, GPIO::OUT, GPIO::HIGH);
+
+        this->red = red;
+        this->green = green;
+        this->blue = blue;
     }
 
     void setColor(bool r, bool g, bool b)
     {
-        this->red.setValue(r ? JetsonGPIO::LOW : JetsonGPIO::HIGH);
-        this->green.setValue(g ? JetsonGPIO::LOW : JetsonGPIO::HIGH);
-        this->blue.setValue(b ? JetsonGPIO::LOW : JetsonGPIO::HIGH);
+        GPIO::output(this->red, r ? GPIO::LOW : GPIO::HIGH);
+        GPIO::output(this->green, g ? GPIO::LOW : GPIO::HIGH);
+        GPIO::output(this->blue, b ? GPIO::LOW : GPIO::HIGH);
     }
 
 private:
-    JetsonGPIO red;
-    JetsonGPIO green;
-    JetsonGPIO blue;
+    int red;
+    int green;
+    int blue;
 };
 
 
@@ -92,6 +96,7 @@ private:
 
 int main(int argc, char const *argv[])
 {
+    GPIO::setmode(GPIO::BCM);
     rclcpp::init(argc, argv);
     rclcpp::spin(std::make_shared<LedListener>());
     rclcpp::shutdown();
