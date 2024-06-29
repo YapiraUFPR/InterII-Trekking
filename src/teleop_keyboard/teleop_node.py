@@ -152,11 +152,11 @@ def main():
                 status = status + 1
                 print_vels(target_linear_velocity, target_angular_velocity)
             elif key == 'a':
-                target_angular_velocity = target_angular_velocity + ANG_VEL_STEP_SIZE
+                target_angular_velocity = target_angular_velocity - ANG_VEL_STEP_SIZE
                 status = status + 1
                 print_vels(target_linear_velocity, target_angular_velocity)
             elif key == 'd':
-                target_angular_velocity = target_angular_velocity - ANG_VEL_STEP_SIZE
+                target_angular_velocity = target_angular_velocity + ANG_VEL_STEP_SIZE
                 status = status + 1
                 print_vels(target_linear_velocity, target_angular_velocity)
             elif key == ' ' or key == 's':
@@ -190,7 +190,7 @@ def main():
             mspeed = control_linear_velocity * 100
             mspeed = int(max(-100, min(mspeed, 100)))
 
-            print(mspeed, angle)
+            #print(mspeed, angle)
 
             twist = Twist()
             twist.linear.x = float(mspeed / 100)

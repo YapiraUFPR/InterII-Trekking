@@ -2,7 +2,7 @@
 
 #common parameters
 #support: 1 imu 1 cam; 1 imu 2 cam: 2 cam; 
-imu: 1         
+imu: 0         
 num_of_cam: 1  
 
 imu_topic: "/sensors/bno08x/raw"
@@ -26,9 +26,13 @@ body_T_cam0: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [0.99255, -0.0,  0.12187, 0.0,
-          0.0, -1.0, -0.0, 0.0,
-          0.12187,  0.0, -0.99255, 0.0,
+   # data: [0.99255, -0.0,  0.12187, 0.0,
+   #        0.0, -1.0, -0.0, 0.0,
+   #        0.12187,  0.0, -0.99255, 0.0,
+   #        0.0, 0.0, 0.0, 1.0]
+   data: [-1.0, 0.0, 0.0, 0.0,
+          0.0, 1.0, 0.0, 0.0,
+          0.0, 0.0, -1.0, 0.0,
           0.0, 0.0, 0.0, 1.0]
 
 #Multiple thread support
@@ -39,7 +43,7 @@ max_cnt: 150            # max feature number in feature tracking
 min_dist: 30            # min distance between two features 
 freq: 10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image 
 F_threshold: 1.0        # ransac threshold (pixel)
-show_track: 1           # publish tracking image as topic
+show_track: 0           # publish tracking image as topic
 flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
 
 #optimization parameters
@@ -52,10 +56,10 @@ acc_n: 0.1          # accelerometer measurement noise standard deviation.
 gyr_n: 0.01         # gyroscope measurement noise standard deviation.     
 acc_w: 0.001        # accelerometer bias random work noise standard deviation.  
 gyr_w: 0.0001       # gyroscope bias random work noise standard deviation.     
-g_norm: 9.81007     # gravity magnitude
+g_norm: 9.65     # gravity magnitude
 
 #unsynchronization parameters
-estimate_td: 0                      # online estimate time offset between camera and imu
+estimate_td: 1                      # online estimate time offset between camera and imu
 td: 0.0                             # initial value of time offset. unit: s. readed image clock + td = real image clock (IMU clock)
 
 #loop closure parameters

@@ -2,13 +2,14 @@
 import rclpy
 from rclpy.node import Node
 import yaml
-from sensor_msgs.msg import Imu
+# from sensor_msgs.msg import Imu
+from custom_msgs.msg import Imu
 import board
 from drivers.libs.i2c import I2C
 from drivers.libs.adafruit_bno08x import (
     BNO_REPORT_ACCELEROMETER,
     BNO_REPORT_GYROSCOPE,
-    # BNO_REPORT_MAGNETOMETER,
+    BNO_REPORT_MAGNETOMETER,
     BNO_REPORT_ROTATION_VECTOR,
 )
 from drivers.libs.adafruit_bno08x.i2c import BNO08X_I2C
@@ -42,6 +43,7 @@ class BnoPublisher(Node):
                 self.bno.enable_feature(BNO_REPORT_ACCELEROMETER)
                 self.bno.enable_feature(BNO_REPORT_GYROSCOPE)
                 self.bno.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+                self.bno.enable_feature(BNO_REPORT_MAGNETOMETER)
             except Exception as e:
                 self.bno = None
                 self.logger.error(f"Failed to initialize BNO008x: {e}")
@@ -82,6 +84,12 @@ class BnoPublisher(Node):
         imu_msg.linear_acceleration.y = accel_y
         imu_msg.linear_acceleration.z = accel_z
         imu_msg.linear_acceleration_covariance[0] = -1
+
+        mag_x, mag_y, mag_z = self.bno.magnetic
+        imu_msg.magnetic_field.x = mag_x
+        imu_msg.magnetic_field.y = mag_y
+        imu_msg.magnetic_field.z = mag_z
+        imu_msg.magnetic_field_covariance[0] = -1
         
         self.imu_pub.publish(imu_msg)
 

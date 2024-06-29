@@ -17,6 +17,7 @@ find_package(rclpy REQUIRED)
 
 find_package(sensor_msgs REQUIRED)
 find_package(vision_msgs REQUIRED)
+find_package(custom_msgs REQUIRED)
 
 # Include Cpp "include" directory
 include_directories(include)

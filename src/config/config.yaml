@@ -92,11 +92,11 @@ steering:
     - 3500
 
 pose_logger:
-  topic: /vins_fusion/imu_propagate
+  pose_topic: /imu_tracker/odom
   output_file: /home/user/ws/Data/maps/track.txt
-  skip_poses: 50
+  skip_poses: 20
 
 visualization_node:
   topics:
-    # - /steering/map
-    - /vins_fusion/imu_propagate
+    - /steering/map
+    - /imu_tracker/odom

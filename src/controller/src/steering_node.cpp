@@ -265,12 +265,12 @@ public:
             switch (this->ROBOT_STATE)
             {
                 case robot_state::FIRST_MARK:
-                    this->setLeds([0, 1, 0], [0, 1, 0]);
+                    this->setLeds({0, 1, 0}, {0, 1, 0});
                     RCLCPP_INFO(this->get_logger(), "Currently at first mark. Will begin navigation to second mark..");
                     this->ROBOT_STATE = robot_state::NAVIGATING;
                     break;
                 case robot_state::NAVIGATING:
-                    this->setLeds([0, 1, 1], [0, 1, 1]);
+                    this->setLeds({0, 1, 1}, {0, 1, 1});
                     RCLCPP_INFO(this->get_logger(), "Navigating...");
                     this->set_speed(this->NEUTRAL_ANGLE, this->LINEAR_SPEED);
                     while (!this->found_mark)
@@ -280,7 +280,7 @@ public:
                     this->ROBOT_STATE = robot_state::SECOND_MARK;
                     break;
                 case robot_state::SECOND_MARK:
-                    this->setLeds([0, 1, 0], [0, 0, 0]);
+                    this->setLeds({0, 1, 0}, {0, 0, 0});
                     RCLCPP_INFO(this->get_logger(), "Reached second mark. Exiting...");
                     this->set_speed(this->NEUTRAL_ANGLE, 0.0);
                     exit = true;
