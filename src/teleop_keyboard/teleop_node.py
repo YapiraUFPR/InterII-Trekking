@@ -63,7 +63,7 @@ msg = """
 Control Your TurtleBot3!
 ---------------------------
 Moving around:
-        w
+        w          e  r
    a    s    d
         x
 
@@ -134,8 +134,8 @@ def main():
     status = 0
     target_linear_velocity = 0.0
     target_angular_velocity = 0.0
-    control_linear_velocity = 0.0
-    control_angular_velocity = 0.0
+
+    acceleration = 0.0
 
     angle =  90
 
@@ -143,14 +143,16 @@ def main():
         print(msg)
         while(1):
             key = get_key(settings)
+            
             if key == 'w':
-                target_linear_velocity = target_linear_velocity + LIN_VEL_STEP_SIZE
+                target_linear_velocity = acceleration
                 status = status + 1
                 print_vels(target_linear_velocity, target_angular_velocity)
             elif key == 'x':
-                target_linear_velocity =target_linear_velocity - LIN_VEL_STEP_SIZE
+                target_linear_velocity = -acceleration
                 status = status + 1
                 print_vels(target_linear_velocity, target_angular_velocity)
+            
             elif key == 'a':
                 target_angular_velocity = target_angular_velocity - ANG_VEL_STEP_SIZE
                 status = status + 1
@@ -159,13 +161,25 @@ def main():
                 target_angular_velocity = target_angular_velocity + ANG_VEL_STEP_SIZE
                 status = status + 1
                 print_vels(target_linear_velocity, target_angular_velocity)
+            
+            elif key == 'e':
+                acceleration += LIN_VEL_STEP_SIZE
+                status = status + 1
+                print(f"Acceleration: {acceleration}")
+            elif key == 'r':
+                if acceleration > 0.0:
+                    acceleration -= LIN_VEL_STEP_SIZE
+                status = status + 1
+                print(f"Acceleration: {acceleration}")
+            
             elif key == ' ' or key == 's':
                 target_linear_velocity = 0.0
-                control_linear_velocity = 0.0
                 target_angular_velocity = 0.0
-                control_angular_velocity = 0.0
                 print_vels(target_linear_velocity, target_angular_velocity)
             else:
+                target_linear_velocity = 0.0
+                target_angular_velocity = 0.0
+                
                 if (key == '\x03'):
                     break
 
@@ -173,24 +187,13 @@ def main():
                 print(msg)
                 status = 0
 
-            control_linear_velocity = make_simple_profile(
-                control_linear_velocity,
-                target_linear_velocity,
-                (LIN_VEL_STEP_SIZE / 2.0))
 
-            control_angular_velocity = make_simple_profile(
-                control_angular_velocity,
-                target_angular_velocity,
-                (ANG_VEL_STEP_SIZE / 2.0))
-
-
-            angle = control_angular_velocity * 90 + 90
+            angle = target_angular_velocity * 90 + 90
             angle = int(max(0, min(angle, 180)))
 
-            mspeed = control_linear_velocity * 100
+            mspeed = target_linear_velocity * 100
             mspeed = int(max(-100, min(mspeed, 100)))
 
-            #print(mspeed, angle)
 
             twist = Twist()
             twist.linear.x = float(mspeed / 100)

@@ -10,10 +10,11 @@ from sys import argv
 bridge = cv_bridge.CvBridge()
 
 def image_callback(msg):
+    print("Received image")
     image_np = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
     
     cv2.imshow("Image window", image_np)
-    cv2.waitKey(1)
+    cv2.waitKey(5)
 
 def main():
 

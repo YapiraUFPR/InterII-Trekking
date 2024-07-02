@@ -8,7 +8,7 @@ from sys import argv
 OFFSET = 250
 SCALE = 1
 
-track_image = cv2.zeros((500, 500, 3), np.uint8)
+track_image = np.zeros((500, 500, 3), np.uint8)
 cv2.line(track_image, (0, OFFSET), (OFFSET*2, OFFSET), (255, 255, 255)) # x-axis
 cv2.line(track_image, (OFFSET, 0), (OFFSET, OFFSET*2), (255, 255, 255)) # y-axis
 
@@ -20,6 +20,8 @@ prev_map = (0,0)
 def draw_line(start, end, color=(0, 255, 0)):
     global track_image
     global track_image_lock
+
+    print("Drawing...")
 
     start = (int(start[0] * SCALE + OFFSET), int(start[1] * SCALE + OFFSET))
     end = (int(end[0] * SCALE + OFFSET), int(end[1] * SCALE + OFFSET))
