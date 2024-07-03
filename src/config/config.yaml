@@ -47,6 +47,11 @@ sensors:
       - 1
       - 0
 
+  bluetooth_gamepad:
+    topic: "/sensors/bluetooth/buttons"
+    sample_rate: 100
+    device_name: "Q36 for Android"
+
 actuators:
   motors:
     topic: /cmd_vel

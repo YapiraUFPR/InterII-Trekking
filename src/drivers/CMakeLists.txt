@@ -68,6 +68,7 @@ install(PROGRAMS
   scripts/tcs32_publisher.py
   scripts/motor_listener.py
   scripts/flare_listener.py
+  scripts/bluetooth_gamepad.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
