@@ -66,7 +66,7 @@ class BluetoothGamepad(Node):
         self.get_logger().info('Bluetooth Publisher Node has been started')
 
     def timer_callback(self):
-        output = ""
+        output = "UNKNOWN"
         # Read output from the controller
         for event in self.gamepad.read_loop():
 
@@ -119,10 +119,11 @@ class BluetoothGamepad(Node):
                     output = "UNKNOWN"
                 break
         
-        msg = String()
-        msg.data = output
-        self.publisher.publish(msg)
-        self.logger.info("Publishing gamepad data...", once=True)
+        if output != "UNKNOWN":
+            msg = String()
+            msg.data = output
+            self.publisher.publish(msg)
+            self.logger.info("Publishing gamepad data...", once=True)
         
 if __name__ == "__main__":
     rclpy.init(args=None)

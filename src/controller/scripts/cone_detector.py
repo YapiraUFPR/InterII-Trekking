@@ -6,7 +6,7 @@ from rclpy.node import Node
 import cv2
 import numpy as np
 from sensor_msgs.msg import Image
-from vision_msgs.msg import Detection2D
+from vision_msgs.msg import Detection2D, ObjectHypothesisWithPose
 from cv_bridge import CvBridge
 
 class ConeDetector(Node):
@@ -27,13 +27,14 @@ class ConeDetector(Node):
             self.detection_topic = detector_config.getNode("topic").string()
             self.sample_rate = int(detector_config.getNode("sample_rate").real())
             self.confidence_threshold = detector_config.getNode("confidence_threshold").real()
-            self.color_upper = detector_config.getNode("color_upper")
-            self.color_lower = detector_config.getNode("color_lower")
+
+            self.color_lower = np.array([int(detector_config.getNode("color_lower").at(i).real()) for i in range(3)])
+            self.color_upper = np.array([int(detector_config.getNode("color_upper").at(i).real()) for i in range(3)])
+            
             self.debug_img = bool(detector_config.getNode("debug_img").real())
             self.debug_topic = detector_config.getNode("debug_topic").string()
             fs.release()
             
-
             # Init publishers
             self.image_listener = self.create_subscription(Image, self.img_topic, self.image_callback, 10)
             self.detections_publisher = self.create_publisher(Detection2D, self.detection_topic, 10)
@@ -54,11 +55,11 @@ class ConeDetector(Node):
                 mask = cv2.dilate(mask, np.ones((3, 3)))
 
                 # find largest contour
-                _, contours = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 largest_contour = max(contours, key=cv2.contourArea)
     
                 # Get bounding box and center
-                if len(largest_contour) > 0:
+                if cv2.contourArea(largest_contour) > 1000:
                     x1, y1, w, h = cv2.boundingRect(largest_contour)
                     x2, y2 = x1 + w, y1 + h
 
@@ -87,13 +88,16 @@ class ConeDetector(Node):
                     # Publish detection
                     detection = Detection2D()
                     detection.header.stamp = self.get_clock().now().to_msg()
-                    detection.bbox.center.x = cx
-                    detection.bbox.center.y = cy
-                    detection.bbox.size_x = x2 - x1
-                    detection.bbox.size_y = y2 - y1
-                    detection.results.pose.position.x = error
+                    detection.bbox.center.position.x = float(cx)
+                    detection.bbox.center.position.y = float(cy)
+                    detection.bbox.size_x = float(x2 - x1)
+                    detection.bbox.size_y = float(y2 - y1)
+                    detection.results = [ObjectHypothesisWithPose()]
+                    detection.results[0].pose.pose.position.x = float(error)
 
                     self.detections_publisher.publish(detection)
+
+            
 
         def image_callback(self, msg):
             # Convert ROS Image to OpenCV Image

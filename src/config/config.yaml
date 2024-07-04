@@ -83,6 +83,20 @@ actuators:
         - 21
         - -1 # should be 22, but for mysterious reasons it doesnt work
 
+cone_detector:
+  topic: "/cone_detector/detections"
+  sample_rate: 10
+  color_upper:
+    - 255
+    - 255
+    - 255
+  color_lower:
+    - 0
+    - 0
+    - 0
+  debug_image: 1
+  debug_topic: "/cone_detector/bounding_box"
+
 steering:
   odometry_topic: /ov_msckf/loop_pose
   map_topic: /steering/map
@@ -97,11 +111,11 @@ steering:
     - 3500
 
 pose_logger:
-  pose_topic: /imu_tracker/odom
-  output_file: /home/user/ws/Data/maps/track.txt
+  pose_topic: "/imu_tracker/odom"
+  output_path: "/home/user/ws/Data/maps"
   skip_poses: 20
 
 visualization_node:
   topics:
-    - /steering/map
-    - /imu_tracker/odom
+    - "/steering/map"
+    - "/imu_tracker/odom"

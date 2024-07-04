@@ -11,10 +11,10 @@ from launch_ros.actions import Node
 
 launch_args = [
     DeclareLaunchArgument(name="map", default_value="true", description="Run in mapping mode"),
-    DeclareLaunchArgument(name="viz", default_value="true", description="Enable visualization"),
+    DeclareLaunchArgument(name="viz", default_value="false", description="Enable visualization"),
 
     # Bag args
-    DeclareLaunchArgument(name="bag", default_value="true", description="Play bag file"),
+    DeclareLaunchArgument(name="bag", default_value="false", description="Play bag file"),
     DeclareLaunchArgument(name="bag_file", default_value="rosbag2_2024_06_27-20_40_24", description="Name of the bag folder to play"),
 ]
     
@@ -27,7 +27,9 @@ def launch_setup(context):
                 get_package_share_directory('drivers'), 'launch'),
                 '/drivers_launch.py']
             )
-        ) if not LaunchConfiguration("map") else ExecuteProcess(
+        ),
+        
+        ExecuteProcess(
             condition=IfCondition(LaunchConfiguration("bag")),
             cmd=["ros2", "bag", "play", bag_path, "--topics", "/sensors/imx/image_raw", "/sensors/bno08x/raw"],
             output="screen"
@@ -36,6 +38,11 @@ def launch_setup(context):
         Node(
             package='pose_logger',
             executable='pose_logger',
+            condition=IfCondition(LaunchConfiguration("map")),
+        ),
+        Node(
+            package='controller',
+            executable='teleop_node.py',
             condition=IfCondition(LaunchConfiguration("map")),
         ),
 

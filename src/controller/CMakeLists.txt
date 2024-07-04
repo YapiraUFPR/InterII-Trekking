@@ -14,6 +14,7 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(vision_msgs REQUIRED)
 find_package(custom_msgs REQUIRED)
 
 include_directories(include)
@@ -44,6 +45,8 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables
 install(PROGRAMS
   scripts/imu_tracking_node.py
+  scripts/teleop_node.py
+  scripts/cone_detector.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
