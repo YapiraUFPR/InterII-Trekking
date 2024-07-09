@@ -85,6 +85,7 @@ actuators:
 
 cone_detector:
   topic: "/cone_detector/detections"
+  intrinsics: "/home/user/ws/src/config/imx219_calib_data.yaml"
   sample_rate: 10
   color_upper:
     - 255
@@ -98,9 +99,10 @@ cone_detector:
   debug_topic: "/cone_detector/bounding_box"
 
 steering:
-  odometry_topic: /ov_msckf/loop_pose
+  odometry_topic: /imu_tracker/odom
   map_topic: /steering/map
   map_file: /home/user/ws/Data/maps/track.txt
+  bt_start_stop: 1
   mark_color_lower:
     - 3200
     - 4000

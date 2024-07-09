@@ -33,6 +33,9 @@ class ConeDetector(Node):
             
             self.debug_img = bool(detector_config.getNode("debug_img").real())
             self.debug_topic = detector_config.getNode("debug_topic").string()
+            
+            self.load_intrinsics(detector_config.getNode("intrinsics").string())
+
             fs.release()
             
             # Init publishers
@@ -46,6 +49,12 @@ class ConeDetector(Node):
             self.bridge = CvBridge()
     
             self.logger.info('Cone detector node launched.')
+
+        def load_intrinsics(self, intrinsics_path):
+            fs = cv2.FileStorage(intrinsics_path, cv2.FileStorage_READ)
+            self.camera_mat = fs.getNode("K").mat()
+            self.dist_coeffs = fs.getNode("D").mat()
+            fs.release()
     
         def timer_callback(self):
             # Detect cone
@@ -103,6 +112,9 @@ class ConeDetector(Node):
             # Convert ROS Image to OpenCV Image
             self.current_image_msg = msg
             self.current_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+
+            # Undistort image
+            self.current_image = cv2.undistort(self.current_image, self.camera_mat, self.dist_coeffs)
 
 if __name__ == "__main__":
     rclpy.init(args=None)

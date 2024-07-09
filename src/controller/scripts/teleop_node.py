@@ -8,7 +8,7 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 
 LIN_VEL_STEP_SIZE = 0.01
-ANG_VEL_STEP_SIZE = 0.1
+ANG_VEL_STEP_SIZE = 0.2
 
 ANG_TO_RAD = 3.14159265358979323846 / 180.0
 

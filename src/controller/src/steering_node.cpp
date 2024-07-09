@@ -12,6 +12,7 @@
 #include "std_msgs/msg/color_rgba.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/string.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <eigen3/Eigen/Dense>
@@ -27,9 +28,11 @@ private:
     const double NEUTRAL_ANGLE = 1.57;
 
     enum robot_state {
+        WAITING_FOR_BT,
         FIRST_MARK,
         NAVIGATING,
         SECOND_MARK,
+        FAILSAFE,
     } ROBOT_STATE;
 
     std::vector<Eigen::Vector2d> map;
@@ -41,10 +44,13 @@ private:
     nav_msgs::msg::Odometry current_pose;
     double current_speed;
     double current_angle;
+    bool use_bt;
+    long ignore_mark_countdown;
 
     // Subscribers
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub;
     rclcpp::Subscription<std_msgs::msg::ColorRGBA>::SharedPtr color_sub;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr bt_sub;
 
     // Publishers
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr map_pub;
@@ -55,6 +61,20 @@ private:
     std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> executor;
 
     // Callbacks
+    void bt_callback(const std_msgs::msg::String::SharedPtr msg)
+    {
+        RCLCPP_INFO(this->get_logger(), "Received bluetooth message: %s", msg->data.c_str());
+
+        if (msg->data == "Y")
+        {
+            this->ROBOT_STATE = robot_state::FIRST_MARK;
+        }
+        else if (msg->data == "A")
+        {
+            this->ROBOT_STATE = robot_state::FAILSAFE;
+        }
+    }
+
     void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         RCLCPP_INFO(this->get_logger(), "Received odometry message: x=%f, y=%f, z=%f", msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
@@ -70,10 +90,16 @@ private:
     {
         RCLCPP_INFO(this->get_logger(), "Received color message: r=%f, g=%f, b=%f, a=%f", msg->r, msg->g, msg->b, msg->a);
 
-        this->found_mark = (msg->r >= this->mark_color_lower[0] && msg->r <= this->mark_color_upper[0]) &&
+        long time_now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        if ((this->ignore_mark_countdown != 0) > (time_now < this->ignore_mark_countdown))
+        {
+            this->found_mark = false;
+        } else {
+            this->found_mark = (msg->r >= this->mark_color_lower[0] && msg->r <= this->mark_color_upper[0]) &&
                           (msg->g >= this->mark_color_lower[1] && msg->g <= this->mark_color_upper[1]) &&
                           (msg->b >= this->mark_color_lower[2] && msg->b <= this->mark_color_upper[2]);
-
+        }
+        
         this->set_flare(found_mark);
     }
 
@@ -214,6 +240,14 @@ public:
             led_topics.push_back(led_topic);
         }
 
+        // Bluetooth start/stop
+        fs["steering"]["bt_start_stop"] >> this->use_bt;
+        if (use_bt)
+        {
+            std::string bt_topic = fs["sensors"]["bluetooth_gamepad"]["topic"].string();
+            this->bt_sub = this->create_subscription<std_msgs::msg::String>(bt_topic, 10, std::bind(&SteeringNode::bt_callback, this, std::placeholders::_1));
+        }
+
         fs.release();
 
         // Create subscribers
@@ -249,9 +283,10 @@ public:
             sleep(1);
         }
 
-        this->ROBOT_STATE = robot_state::FIRST_MARK;
+        this->ROBOT_STATE = this->use_bt ? robot_state::WAITING_FOR_BT : robot_state::FIRST_MARK;
         this->found_mark = false;
         this->flare_turn_off_time = 0.0;
+        this->ignore_mark_countdown = 0;
     }
 
     void navigate(void)
@@ -260,28 +295,51 @@ public:
         this->executor->add_node(get_node_base_interface());
 
         bool exit = false;
-        while (!exit)
+        while (!exit && rclcpp::ok())
         {
             switch (this->ROBOT_STATE)
             {
+                case robot_state::WAITING_FOR_BT:
+                    this->setLeds({1, 0, 0}, {1, 0, 0});
+                    RCLCPP_INFO_ONCE(this->get_logger(), "Waiting for bluetooth signal...");
+                    this->executor->spin_once(std::chrono::milliseconds(100));
+                    break;
+
                 case robot_state::FIRST_MARK:
                     this->setLeds({0, 1, 0}, {0, 1, 0});
                     RCLCPP_INFO(this->get_logger(), "Currently at first mark. Will begin navigation to second mark..");
                     this->ROBOT_STATE = robot_state::NAVIGATING;
                     break;
+
                 case robot_state::NAVIGATING:
                     this->setLeds({0, 1, 1}, {0, 1, 1});
-                    RCLCPP_INFO(this->get_logger(), "Navigating...");
+                    RCLCPP_INFO_ONCE(this->get_logger(), "Navigating...");
                     this->set_speed(this->NEUTRAL_ANGLE, this->LINEAR_SPEED);
-                    while (!this->found_mark)
+
+                    if (this->ignore_mark_countdown == 0)
                     {
-                        this->executor->spin_once(std::chrono::milliseconds(100));
+                        this->ignore_mark_countdown = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() + 5000;
+                        RCLCPP_INFO(this->get_logger(), "Ignoring mark for 5 seconds...");
                     }
-                    this->ROBOT_STATE = robot_state::SECOND_MARK;
+
+                    this->executor->spin_once(std::chrono::milliseconds(100));
+
+                    if (this->found_mark)
+                    {
+                        this->set_speed(this->NEUTRAL_ANGLE, 0.0);
+                        this->ROBOT_STATE = robot_state::SECOND_MARK;
+                        this->ignore_mark_countdown = 0;
+                    }
                     break;
                 case robot_state::SECOND_MARK:
                     this->setLeds({0, 1, 0}, {0, 0, 0});
                     RCLCPP_INFO(this->get_logger(), "Reached second mark. Exiting...");
+                    this->set_speed(this->NEUTRAL_ANGLE, 0.0);
+                    exit = true;
+                    break;
+                case robot_state::FAILSAFE:
+                    this->setLeds({1, 0, 0}, {1, 0, 0});
+                    RCLCPP_INFO(this->get_logger(), "FAILSAFE ACTIVATED. Exiting...");
                     this->set_speed(this->NEUTRAL_ANGLE, 0.0);
                     exit = true;
                     break;
