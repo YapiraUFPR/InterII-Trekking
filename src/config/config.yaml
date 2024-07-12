@@ -128,10 +128,10 @@ steering:
     - 4200
     - 4200
     - 3500
-  linear_speed: 13
+  linear_speed: 18
   ignore_mark_for: 5000
   use_cone_pos_after: 100000
-  track_radius: 0.001
+  track_radius: 0.0001
 
 pose_logger:
   pose_topic: "/imu_tracker/odom"
