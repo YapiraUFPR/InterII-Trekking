@@ -178,7 +178,7 @@ def main():
                 print_vels(target_linear_velocity, target_angular_velocity)
             else:
                 target_linear_velocity = 0.0
-                target_angular_velocity = 0.0
+#                target_angular_velocity = 0.0
                 
                 if (key == '\x03'):
                     break

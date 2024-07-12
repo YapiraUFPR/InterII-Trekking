@@ -40,7 +40,7 @@ private:
 
     void flare_callback(const std_msgs::msg::Bool::SharedPtr msg)
     {
-        RCLCPP_INFO(this->get_logger(), "Received message: %d", msg->data);
+        // RCLCPP_INFO(this->get_logger(), "Received message: %d", msg->data);
         if (msg->data)
         {
             this->flare_gpio.setValue(JetsonGPIO::Value::HIGH);

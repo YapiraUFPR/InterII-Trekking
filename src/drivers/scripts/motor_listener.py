@@ -10,6 +10,7 @@ import cv2
 from time import sleep
 
 RAD_TO_DEG = 180 / 3.14159265358979323846
+ZERO_ANGLE_CORRECTION = 45
 
 class MotorsListener(Node):
 
@@ -72,7 +73,7 @@ class MotorsListener(Node):
 
         # Convert from rad to degrees
         self.target_angle = angle
-        self.target_angle = max(10, min(170, self.target_angle))
+        self.target_angle = max(0, min(180, self.target_angle))
 
         self.target_speed = msg.linear.x
         self.target_speed = max(-0.7, min(0.7, self.target_speed))
@@ -105,14 +106,14 @@ class MotorsListener(Node):
 
                 print("angle")
                 self.current_angle = self.make_simple_profile(self.target_angle, self.current_angle, self.angle_step)
-                self.kit.servo[self.servo_channel].angle = min(self.current_angle + 15, 180)
+                self.kit.servo[self.servo_channel].angle = max(0, min(180, self.current_angle - ZERO_ANGLE_CORRECTION))
                 
                 print(self.current_angle, self.current_speed)
 
                 sleep(0.001)
                 rclpy.spin_once(self, timeout_sec=0.05)
         except KeyboardInterrupt:
-            self.kit.servo[self.servo_channel].angle = 90
+            self.kit.servo[self.servo_channel].angle = 90 - ZERO_ANGLE_CORRECTION
             self.kit.continuous_servo[self.esc_channel].throttle = 0
             print("Keyboard interrupt detected.")
             return

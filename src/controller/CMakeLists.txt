@@ -26,7 +26,7 @@ find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 add_executable(steering_node src/steering_node.cpp) 
-ament_target_dependencies(steering_node rclcpp std_msgs nav_msgs geometry_msgs OpenCV Eigen3)
+ament_target_dependencies(steering_node rclcpp std_msgs vision_msgs nav_msgs geometry_msgs OpenCV Eigen3)
 target_link_libraries( steering_node ${OpenCV_LIBS})
 install(TARGETS
   steering_node
@@ -47,6 +47,7 @@ install(PROGRAMS
   scripts/imu_tracking_node.py
   scripts/teleop_node.py
   scripts/cone_detector.py
+  scripts/mark_detector.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

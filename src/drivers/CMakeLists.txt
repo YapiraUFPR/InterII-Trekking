@@ -29,6 +29,7 @@ include_directories("${CUDA_INCLUDE_DIRS}")
 # OpenCV dependencies
 find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
+find_package(cv_bridge REQUIRED)
 
 find_package(jetson-utils REQUIRED)
 find_package(JetsonGPIO REQUIRED)
@@ -39,6 +40,14 @@ ament_target_dependencies(camera_publisher rclcpp sensor_msgs vision_msgs jetson
 target_link_libraries( camera_publisher ${OpenCV_LIBS} "/usr/local/lib/libjetson-utils.so")
 install(TARGETS
   camera_publisher
+  DESTINATION lib/${PROJECT_NAME})
+
+# opencv_cam_pub
+add_executable(opencv_cam_pub src/opencv_cam_pub.cpp) 
+ament_target_dependencies(opencv_cam_pub rclcpp sensor_msgs std_msgs cv_bridge OpenCV CUDA)
+target_link_libraries( opencv_cam_pub ${OpenCV_LIBS})
+install(TARGETS
+  opencv_cam_pub
   DESTINATION lib/${PROJECT_NAME})
 
 # led_listener

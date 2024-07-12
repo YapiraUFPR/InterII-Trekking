@@ -30,7 +30,7 @@ class FlareListener(Node):
 
     def flare_callback(self, msg):
 
-        self.get_logger().info(f"Received msg: {msg.data}")
+        # self.get_logger().info(f"Received msg: {msg.data}")
 
         value = GPIO.HIGH if msg.data else GPIO.LOW
         GPIO.output(self.pin, value)

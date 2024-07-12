@@ -31,7 +31,7 @@ class ConeDetector(Node):
             self.color_lower = np.array([int(detector_config.getNode("color_lower").at(i).real()) for i in range(3)])
             self.color_upper = np.array([int(detector_config.getNode("color_upper").at(i).real()) for i in range(3)])
             
-            self.debug_img = bool(detector_config.getNode("debug_img").real())
+            self.debug_img = bool(detector_config.getNode("debug_image").real())
             self.debug_topic = detector_config.getNode("debug_topic").string()
             
             self.load_intrinsics(detector_config.getNode("intrinsics").string())
@@ -59,16 +59,30 @@ class ConeDetector(Node):
         def timer_callback(self):
             # Detect cone
             if self.current_image is not None:
+                self.logger.info("Started calculatng error...", once=True)
 
                 mask = cv2.inRange(self.current_image, self.color_lower, self.color_upper)
-                mask = cv2.dilate(mask, np.ones((3, 3)))
+
+                #mask = cv2.erode(mask, np.ones((5, 5)))
+                mask = cv2.dilate(mask, np.ones((5, 5)))
+
+                # debug_img_msg = self.bridge.cv2_to_imgmsg(mask, encoding="mono8")
+                # self.debug_publisher.publish(debug_img_msg)
 
                 # find largest contour
                 contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                largest_contour = max(contours, key=cv2.contourArea)
-    
+                largest_contour = None
+                largest_size = 0
+                for contour in contours:
+                    c_size = cv2.contourArea(contour)
+                    if c_size > largest_size:
+                        largest_size = c_size
+                        largest_contour = contour
+
+                # print(largest_size)
+                
                 # Get bounding box and center
-                if cv2.contourArea(largest_contour) > 1000:
+                if largest_contour is not None: #and cv2.contourArea(largest_contour) > 1000:
                     x1, y1, w, h = cv2.boundingRect(largest_contour)
                     x2, y2 = x1 + w, y1 + h
 
@@ -78,7 +92,7 @@ class ConeDetector(Node):
                     # Calculate error and correction
                     img_cx = width//2
                     error = cx - img_cx
-                    self.logger.info(f"Center point error: {error}")
+                    #self.logger.info(f"Center point error: {error}")
 
                     if self.debug_img:
                         # Draw bounding box
@@ -89,10 +103,9 @@ class ConeDetector(Node):
                         cv2.circle(self.current_image, (cx, cy), 5, (0, 0, 255), -1)
                         # Draw error line
                         cv2.line(self.current_image, (width//2, height//2), (cx, cy), (255, 0, 0), 2)
-                        cv2.text(self.current_image, f"Error: {error}", (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                        # cv2.text(self.current_image, f"Error: {error}", (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
-                        debug_img_msg = self.bridge.cv2_to_imgmsg(self.current_image, encoding="bgr8")
-                        self.debug_publisher.publish(debug_img_msg)
+                        # self.logger.info("Publishing debug image...")
     
                     # Publish detection
                     detection = Detection2D()
@@ -103,18 +116,22 @@ class ConeDetector(Node):
                     detection.bbox.size_y = float(y2 - y1)
                     detection.results = [ObjectHypothesisWithPose()]
                     detection.results[0].pose.pose.position.x = float(error)
-
                     self.detections_publisher.publish(detection)
 
-            
+                    if self.debug_img:
+                        concat = np.hstack([self.current_image, cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)])
 
+                        debug_img_msg = self.bridge.cv2_to_imgmsg(concat, encoding="bgr8")
+                        self.debug_publisher.publish(debug_img_msg)
+
+            
         def image_callback(self, msg):
             # Convert ROS Image to OpenCV Image
             self.current_image_msg = msg
             self.current_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
 
             # Undistort image
-            self.current_image = cv2.undistort(self.current_image, self.camera_mat, self.dist_coeffs)
+            # self.current_image = cv2.undistort(self.current_image, self.camera_mat, self.dist_coeffs)
 
 if __name__ == "__main__":
     rclpy.init(args=None)

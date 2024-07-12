@@ -21,7 +21,8 @@ sensors:
   camera:
     topic: /sensors/imx/image_raw
     sample_rate: 30 # is also framerate
-    input_stream: csi://0
+    # input_stream: csi://0
+    input_stream: "0"
     imu_sync: 1
     resolution:
       width: 640
@@ -88,20 +89,36 @@ cone_detector:
   intrinsics: "/home/user/ws/src/config/imx219_calib_data.yaml"
   sample_rate: 10
   color_upper:
-    - 255
-    - 255
-    - 255
+    - 105
+    - 140
+    - 230
   color_lower:
-    - 0
-    - 0
-    - 0
+    - 60
+    - 90
+    - 170
   debug_image: 1
   debug_topic: "/cone_detector/bounding_box"
+
+mark_detector:
+  topic: "/mark_detectror/detected"
+  sample_rate: 10
+  color_upper:
+    - 120
+    - 206
+    - 220
+  color_lower:
+    - 80
+    - 190
+    - 190
+    # - 150
+    # - 150
+  debug_image: 1
+  debug_topic: "/mark_detector/bounding_box"
 
 steering:
   odometry_topic: /imu_tracker/odom
   map_topic: /steering/map
-  map_file: /home/user/ws/Data/maps/track.txt
+  map_file: /home/user/ws/Data/maps/straight_line.txt
   bt_start_stop: 1
   mark_color_lower:
     - 3200
@@ -111,6 +128,10 @@ steering:
     - 4200
     - 4200
     - 3500
+  linear_speed: 13
+  ignore_mark_for: 5000
+  use_cone_pos_after: 100000
+  track_radius: 0.001
 
 pose_logger:
   pose_topic: "/imu_tracker/odom"

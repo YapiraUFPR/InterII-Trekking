@@ -10,7 +10,7 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, AndS
 from launch_ros.actions import Node
 
 launch_args = [
-    DeclareLaunchArgument(name="map", default_value="true", description="Run in mapping mode"),
+    DeclareLaunchArgument(name="map", default_value="false", description="Run in mapping mode"),
     DeclareLaunchArgument(name="viz", default_value="false", description="Enable visualization"),
 
     # Bag args
@@ -44,6 +44,18 @@ def launch_setup(context):
             package='controller',
             executable='teleop_node.py',
             condition=IfCondition(LaunchConfiguration("map")),
+        ),
+
+        Node(
+            package='controller',
+            executable='cone_detector.py',
+            condition=IfCondition(NotSubstitution(LaunchConfiguration('map'))),
+        ),
+
+        Node(
+            package='controller',
+            executable='mark_detector.py',
+            condition=IfCondition(NotSubstitution(LaunchConfiguration('map'))),
         ),
 
         Node(

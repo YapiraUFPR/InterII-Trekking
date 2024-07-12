@@ -99,7 +99,7 @@ private:
         bool g = msg->g > 0.0;
         bool b = msg->b > 0.0;
 
-        RCLCPP_INFO(this->get_logger(), "Setting LED %d to RGB(%d %d %d)", led_idx, r, g, b);
+        // RCLCPP_INFO(this->get_logger(), "Setting LED %d to RGB(%d %d %d)", led_idx, r, g, b);
 
         this->leds[led_idx].setColor(r, g, b);
     }

@@ -8,7 +8,7 @@ launch_args = [
     DeclareLaunchArgument(name="camera_enable", default_value="true", description="enable camera node"),
     DeclareLaunchArgument(name="imu_enable", default_value="true", description="enable IMU node"),
     DeclareLaunchArgument(name="status_led_enable", default_value="true", description="enable led node"),
-    DeclareLaunchArgument(name="flare_enable", default_value="false", description="enable flare node"),
+    DeclareLaunchArgument(name="flare_enable", default_value="true", description="enable flare node"),
     DeclareLaunchArgument(name="dist_sensor_enable", default_value="false", description="enable distance sensor node"),
     DeclareLaunchArgument(name="bat_monitor_enable", default_value="false", description="enable battery monitor node"),
     DeclareLaunchArgument(name="color_sensor_enable", default_value="false", description="enable color sensor node"),
@@ -21,7 +21,8 @@ def launch_setup(context):
         Node(
             package='drivers',
             condition=IfCondition(LaunchConfiguration("camera_enable")),
-            executable='camera_publisher',
+            # executable='camera_publisher',
+            executable='opencv_cam_pub',
         ),
         Node(
             package='drivers',
