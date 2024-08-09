@@ -34,7 +34,7 @@ public:
         for (size_t i = 0; i < visualization_topics.size(); i++)
         {
             visualization_msgs::msg::Marker msg;
-            msg.header.frame_id = "world";
+            msg.header.frame_id = "map";
             msg.header.stamp = this->now();
             msg.ns = "points_and_lines";
             msg.action = visualization_msgs::msg::Marker::ADD;
@@ -42,9 +42,9 @@ public:
             msg.type = visualization_msgs::msg::Marker::LINE_STRIP; 
             msg.pose.orientation.w = 1.0;
 
-            msg.scale.x = 1.05; 
-            msg.scale.y = 1.05;
-            msg.scale.z = 1.05;
+            msg.scale.x = 0.3; 
+            msg.scale.y = 0.3;
+            msg.scale.z = 0.3;
 
             msg.color.r = COLORS[i][0];
             msg.color.g = COLORS[i][1];

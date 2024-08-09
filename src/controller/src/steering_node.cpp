@@ -15,6 +15,9 @@
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "vision_msgs/msg/detection2_d.hpp"
+#include "custom_msgs/msg/imu.hpp"
+
+#include "pid.h"
 
 #include <opencv2/opencv.hpp>
 #include <eigen3/Eigen/Dense>
@@ -30,6 +33,13 @@ private:
     int LINEAR_SPEED = 13; // percent
     int IGNORE_MARK_FOR = 5000;
     int USE_CONE_POS_AFTER = 5000;
+    int CONE_SPEED_FRACTION = 0.85;
+
+    std::shared_ptr<PID> pid;
+
+    const double MIN_ANGLE = 0.0;
+    const double MAX_ANGLE = 3.14;
+    const double DELTA_T = 1.0 / 138.0;
 
     enum ROBOT_STATE
     {
@@ -47,6 +57,9 @@ private:
     double current_angle;
     bool use_bt;
 
+    double current_robot_angle = this->NEUTRAL_ANGLE;
+    double current_angular_speed = 0.0;
+
     // Callback queues
     const size_t BT_QUEUE_SIZE = 10;
     std::deque<std::string> bt_buttons;
@@ -62,6 +75,7 @@ private:
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr mark_sub;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr bt_sub;
     rclcpp::Subscription<vision_msgs::msg::Detection2D>::SharedPtr cone_det_sub;
+    rclcpp::Subscription<custom_msgs::msg::Imu>::SharedPtr imu_sub;
 
     // Publishers
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr map_pub;
@@ -105,9 +119,27 @@ private:
 
     void cone_det_callback(const vision_msgs::msg::Detection2D::SharedPtr msg)
     {
+        RCLCPP_INFO_ONCE(this->get_logger(), "Received cone detection message");
+
         this->cone_errors.push_back(msg->results[0].pose.pose.position.x);
         if (this->cone_errors.size() > this->CONE_QUEUE_SIZE)
             this->cone_errors.pop_front();
+    }
+
+    void imu_callback(const custom_msgs::msg::Imu::SharedPtr msg)
+    {
+        double accel_ang_z = msg->angular_velocity.z;
+
+        // High pass filter
+        accel_ang_z = (abs(accel_ang_z) < 0.001) ? 0.0 : accel_ang_z;
+
+        this->current_angular_speed += accel_ang_z * this->DELTA_T;
+        this->current_robot_angle += accel_ang_z * this->DELTA_T;
+
+        if (this->current_robot_angle > this->MAX_ANGLE)
+            this->current_robot_angle = this->MAX_ANGLE;
+        else if (this->current_robot_angle < this->MIN_ANGLE)
+            this->current_robot_angle = this->MIN_ANGLE;
     }
 
     // Publishers functions
@@ -175,7 +207,9 @@ private:
             Eigen::Vector2d direction = b - a;
 
             // Check if normal point is on line segment
-            if ((normal_point - a).norm() + (normal_point - b).norm() == (a - b).norm())
+            // sus
+            if ((normal_point - a).norm() + (normal_point - b).norm() == 
+            (a - b).norm())
             {
                 normal_point = b;
                 a = map[(i + 1) % map.size()];
@@ -199,10 +233,10 @@ private:
         RCLCPP_INFO(this->get_logger(), "Closest distance: %f", closest_distance);
 
         // Calculate angle to target
-        double steering_angle = 0.0;
-        if (closest_distance < this->PATH_RADIUS)
+        double steering_angle = this->NEUTRAL_ANGLE;
+        if (closest_distance > this->PATH_RADIUS)
         {
-            steering_angle = atan2(target.y() - this->current_pose.pose.pose.position.y, target.x() - this->current_pose.pose.pose.position.x);
+            steering_angle = atan2(target.y() - curr_pos.y(), target.x() - curr_pos.x());
         }
 
         return steering_angle;
@@ -210,7 +244,7 @@ private:
 
     double correctToCones(double error)
     {
-        return error * 0.0045;
+        return (error * 0.0045) + this->NEUTRAL_ANGLE;
     }
 
 public:
@@ -227,6 +261,11 @@ public:
         std::string flare_topic = fs["actuators"]["flare"]["topic"].string();
         std::string motors_topic = fs["actuators"]["motors"]["topic"].string();
         std::string cone_det_topic = fs["cone_detector"]["topic"].string();
+        std::string imu_topic = fs["sensors"]["imu"]["topic"].string();
+        double kp = fs["slam"]["pid"]["kp"].real();
+        double kd = fs["slam"]["pid"]["kd"].real();
+        double ki = fs["slam"]["pid"]["ki"].real();
+
 
         std::vector<std::string> led_topics;
         for (size_t i = 0; i < fs["actuators"]["led"]["topics"].size(); i++)
@@ -248,6 +287,7 @@ public:
         fs["steering"]["use_cone_pos_after"] >> this->USE_CONE_POS_AFTER;
         fs["steering"]["linear_speed"] >> this->LINEAR_SPEED;
         fs["steering"]["track_radius"] >> this->PATH_RADIUS;
+        fs["steering"]["cone_speed_fraction"] >> this->CONE_SPEED_FRACTION;
 
         fs.release();
 
@@ -255,6 +295,7 @@ public:
         this->odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(odometry_topic, 10, std::bind(&SteeringNode::odom_callback, this, std::placeholders::_1));
         this->mark_sub = this->create_subscription<std_msgs::msg::Bool>(mark_topic, 10, std::bind(&SteeringNode::mark_callback, this, std::placeholders::_1));
         this->cone_det_sub = this->create_subscription<vision_msgs::msg::Detection2D>(cone_det_topic, 10, std::bind(&SteeringNode::cone_det_callback, this, std::placeholders::_1));
+        this->imu_sub = this->create_subscription<custom_msgs::msg::Imu>(imu_topic, 10, std::bind(&SteeringNode::imu_callback, this, std::placeholders::_1));
 
         // Create publishers
         this->map_pub = this->create_publisher<nav_msgs::msg::Odometry>(map_topic, 10);
@@ -280,9 +321,12 @@ public:
             nav_msgs::msg::Odometry msg;
             msg.pose.pose.position.x = x;
             msg.pose.pose.position.y = y;
+            msg.pose.pose.position.z = 0;
             this->map_pub->publish(msg);
         }
         RCLCPP_INFO(this->get_logger(), "Map loaded with %d points", this->map.size());
+
+        this->pid = std::make_shared<PID>(this->DELTA_T, this->MAX_ANGLE, this->MIN_ANGLE, kp, kd, ki);
     }
 
     void navigate(void)
@@ -294,7 +338,8 @@ public:
 
         long steering_duration = 0;
         long ignore_mark_until = 0;
-        double correction;
+        double correction; 
+        int speed;
 
         bool exit = false;
         while (!exit && rclcpp::ok())
@@ -359,31 +404,43 @@ public:
                     break;
                 }   
 
-                correction = 0.0;
+                correction = this->NEUTRAL_ANGLE;
+                speed = this->LINEAR_SPEED;
+                // RCLCPP_INFO(this->get_logger(), "time: %ld, %ld - size: %ld ", curr_time, steering_duration, this->cone_errors.size());
                 if ((curr_time < steering_duration) &&  (this->odom_positions.size() > 2))
                 {
                     RCLCPP_INFO_ONCE(this->get_logger(), "Steering...");
 
                     // Steer
-                    Eigen::Vector2d latest_pose = this->odom_positions.back();
-                    this->odom_positions.pop_back();
-                    double latest_angle = this->odom_angles.back();
-                    this->odom_angles.pop_back();
+                    // Eigen::Vector2d latest_pose = this->odom_positions.back();
+                    // this->odom_positions.pop_back();
+                    // double latest_angle = this->odom_angles.back();
+                    // this->odom_angles.pop_back();
 
-                    correction = this->steer(latest_pose, latest_angle);
+                    // correction = this->steer(latest_pose, latest_angle);
+
+                    // RCLCPP_INFO(this->get_logger(), "Current robot angle: %f", this->current_robot_angle);
+
+                    correction = this->pid->calculate(this->NEUTRAL_ANGLE, this->current_robot_angle);
                 }
-                else if ((curr_time > steering_duration) && (this->cone_errors.size() > 2))
+                else if (curr_time > steering_duration)
                 {
                     RCLCPP_INFO_ONCE(this->get_logger(), "Using cone...");
 
-                    // Use cone to correct position
-                    double latest_error = this->cone_errors.back();
-                    this->cone_errors.pop_back();
+                    if (this->cone_errors.size() > 0)
+                    {
+                        // Use cone to correct position
+                        double latest_error = this->cone_errors.back();
+                        this->cone_errors.pop_back();
 
-                    correction = this->correctToCones(latest_error);
+                        correction = this->correctToCones(latest_error);
+			            RCLCPP_INFO(this->get_logger(), "Cone correction: %f", correction);
+                    }
+
+                    speed = this->LINEAR_SPEED * 0.85;
                 }
-                RCLCPP_INFO(this->get_logger(), "Correction: %f", correction);
-                this->setSpeed(correction, this->LINEAR_SPEED);
+                // RCLCPP_INFO(this->get_logger(), "Correction: %f", correction);
+                this->setSpeed(correction, speed);
 
                 // Check failsafe
                 if (this->use_bt)
@@ -403,6 +460,10 @@ public:
                 this->setLeds({0, 1, 0}, {0, 0, 0});
                 RCLCPP_INFO(this->get_logger(), "Reached second mark. Exiting...");
                 
+                this->setSpeed(this->NEUTRAL_ANGLE, this->LINEAR_SPEED);
+		        this->setFlare(true);
+		        sleep(3);
+		        this->setFlare(false);
                 this->setSpeed(this->NEUTRAL_ANGLE, 0.0);
                 exit = true;
                 

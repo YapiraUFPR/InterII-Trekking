@@ -25,8 +25,8 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
-add_executable(steering_node src/steering_node.cpp) 
-ament_target_dependencies(steering_node rclcpp std_msgs vision_msgs nav_msgs geometry_msgs OpenCV Eigen3)
+add_executable(steering_node src/steering_node.cpp src/pid.cpp) 
+ament_target_dependencies(steering_node rclcpp custom_msgs std_msgs vision_msgs nav_msgs geometry_msgs OpenCV Eigen3)
 target_link_libraries( steering_node ${OpenCV_LIBS})
 install(TARGETS
   steering_node
