@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(pose_logger)
+project(mapper)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -16,12 +16,12 @@ find_package(nav_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
-# pose_logger
-add_executable(pose_logger src/pose_logger.cpp)
-ament_target_dependencies(pose_logger rclcpp nav_msgs OpenCV)
-target_link_libraries( pose_logger ${OpenCV_LIBS} )
+# mapper
+add_executable(mapper src/mapper.cpp)
+ament_target_dependencies(mapper rclcpp nav_msgs OpenCV)
+target_link_libraries( mapper ${OpenCV_LIBS} )
 install(TARGETS
-  pose_logger
+  mapper
   DESTINATION lib/${PROJECT_NAME})
 
 

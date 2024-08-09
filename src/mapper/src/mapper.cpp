@@ -9,23 +9,23 @@
 
 #include <opencv2/opencv.hpp>
 
-class PoseLogger : public rclcpp::Node
+class Mapper : public rclcpp::Node
 {
 public:
-    PoseLogger() : Node("pose_logger")
+    Mapper() : Node("mapper")
     {
-        RCLCPP_INFO(this->get_logger(), "Starting pose logger...");
+        RCLCPP_INFO(this->get_logger(), "Starting mapper...");
 
         // Parse parameters
         std::string pose_topic, output_path;
         cv::FileStorage fs;
         fs.open("/home/user/ws/src/config/config.yaml", cv::FileStorage::READ);
-        fs["pose_logger"]["pose_topic"] >> pose_topic;
-        fs["pose_logger"]["output_path"] >> output_path;
-        fs["pose_logger"]["skip_poses"] >> this->skip_poses;
+        fs["mapper"]["pose_topic"] >> pose_topic;
+        fs["mapper"]["output_path"] >> output_path;
+        fs["mapper"]["skip_poses"] >> this->skip_poses;
 
         pose_subscriber_ = this->create_subscription<nav_msgs::msg::Odometry>(
-            pose_topic, 10, std::bind(&PoseLogger::pose_callback, this, std::placeholders::_1));
+            pose_topic, 10, std::bind(&Mapper::pose_callback, this, std::placeholders::_1));
 
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
@@ -41,7 +41,7 @@ public:
 
         this->pose_counter = -1;
 
-        RCLCPP_INFO(this->get_logger(), "Pose logger has been started.");
+        RCLCPP_INFO(this->get_logger(), "Mapper has been started.");
     }
 
 private:
@@ -63,7 +63,7 @@ private:
 int main(int argc, char * argv[])
 {
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<PoseLogger>());
+    rclcpp::spin(std::make_shared<Mapper>());
     rclcpp::shutdown();
     return 0;
 }

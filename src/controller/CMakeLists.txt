@@ -15,6 +15,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(vision_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 find_package(custom_msgs REQUIRED)
 
 include_directories(include)
@@ -32,11 +33,12 @@ install(TARGETS
   steering_node
   DESTINATION lib/${PROJECT_NAME})
 
-add_executable(slam_node src/slam_node.cpp src/pid.cpp) 
-ament_target_dependencies(slam_node rclcpp std_msgs sensor_msgs geometry_msgs OpenCV Eigen3)
-target_link_libraries( slam_node ${OpenCV_LIBS})
+# visualization_node
+add_executable(visualization_node src/visualization_node.cpp)
+ament_target_dependencies(visualization_node rclcpp geometry_msgs nav_msgs visualization_msgs OpenCV)
+target_link_libraries( visualization_node ${OpenCV_LIBS} )
 install(TARGETS
-  slam_node
+  visualization_node
   DESTINATION lib/${PROJECT_NAME})
   
 # Install Python modules

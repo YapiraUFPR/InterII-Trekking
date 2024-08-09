@@ -36,8 +36,8 @@ def launch_setup(context):
         ),
 
         Node(
-            package='pose_logger',
-            executable='pose_logger',
+            package='mapper',
+            executable='mapper',
             condition=IfCondition(LaunchConfiguration("map")),
         ),
         Node(
@@ -65,7 +65,7 @@ def launch_setup(context):
         ),
 
         Node(
-           package='visualizer',
+           package='controller',
            condition=IfCondition(LaunchConfiguration("viz")),
            executable='visualization_node',
         ),
